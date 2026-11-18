@@ -404,6 +404,14 @@ body.step5 .work { grid-template-columns: minmax(0, 1fr) 440px; grid-template-ro
   display: block; width: 100%; padding: 8px 10px; resize: vertical; font-size: 13px; line-height: 1.45;
   background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-ui);
 }
+.save-label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 700; }
+.save-input {
+  display: block; width: 100%; padding: 10px 12px; font-size: 15px;
+  background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-ui);
+}
+.save-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.save-name { margin: 12px 0 0; font-size: 13.5px; color: var(--muted); word-break: break-all; }
+.save-name b { color: var(--text); font-weight: 600; }
 .ai-error { margin: 6px 0 0; padding: 8px 10px; font-size: 13.5px; color: #B42318; background: #FEF3F2; border-radius: var(--r-ui); }
 .ai-review { margin-bottom: 14px; padding: 12px; background: var(--accent-soft); border-radius: var(--r-ui); }
 .ai-review .sub { margin-top: 0; }
@@ -694,6 +702,21 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
     <div class="modal-acts">
       <button class="btn primary" id="ai-load">초안 불러오기</button>
       <button class="btn" id="ai-back">뒤로</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="savebox" role="dialog" aria-modal="true" aria-labelledby="savebox-title" hidden>
+  <div class="modal">
+    <h2 id="savebox-title">작업 파일 저장</h2>
+    <p>파일 이름에 성함과 저장한 시각이 들어갑니다. 구글 드라이브에 올렸을 때 누구의 파일인지 구분하기 위해서입니다.</p>
+    <label class="save-label" for="author">성함</label>
+    <input id="author" class="save-input" type="text" maxlength="20" placeholder="예: 홍길동" autocomplete="name">
+    <p class="ai-error" id="save-error" role="alert" hidden>성함을 적어 주세요.</p>
+    <p class="save-name">저장할 파일 이름: <b id="save-name"></b></p>
+    <div class="modal-acts">
+      <button class="btn primary" id="save-go">저장</button>
+      <button class="btn" id="save-cancel">취소</button>
     </div>
   </div>
 </div>
@@ -1697,7 +1720,7 @@ function panelResult(p) {
   txt.addEventListener('click', () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([resultText()], { type: 'text/plain' }));
-    a.download = (state.title || '업무흐름') + '_결과.txt';
+    a.download = (author ? author + '_' : '') + (safeName(state.title) || '업무흐름') + '_결과.txt';
     a.click();
     URL.revokeObjectURL(a.href);
   });
@@ -2046,14 +2069,42 @@ function showSample() {
 }
 $('sample').addEventListener('click', showSample);
 $('first').addEventListener('click', () => change(() => addNode()));
+// 작업 파일 이름: 성함_업무 제목_저장 시각. 성함은 이 브라우저에 기억해 두고 다음 저장 때 채운다
+const AUTHOR_KEY = 'hycu-flow-author';
+let author = '';
+try { author = localStorage.getItem(AUTHOR_KEY) || ''; } catch {}
+const safeName = s => String(s || '').replace(/[\\/:*?"<>|\n\r\t]/g, '').replace(/\s+/g, ' ').trim();
+function stamp() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+}
+const fileBase = who => [safeName(who) || '성함', safeName(state.title) || '업무흐름', stamp()].join('_');
+function saveName() { $('save-name').textContent = fileBase($('author').value) + '.json'; }
 $('save').addEventListener('click', () => {
+  $('author').value = author;
+  $('save-error').hidden = true;
+  saveName();
+  $('savebox').hidden = false;
+  $('author').focus();
+});
+$('author').addEventListener('input', () => { $('save-error').hidden = true; saveName(); });
+$('author').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); $('save-go').click(); } });
+$('save-cancel').addEventListener('click', () => { $('savebox').hidden = true; });
+$('save-go').addEventListener('click', () => {
+  const who = safeName($('author').value);
+  if (!who) { $('save-error').hidden = false; $('author').focus(); return; }
+  author = who;
+  try { localStorage.setItem(AUTHOR_KEY, who); } catch {}
+  const name = fileBase(who) + '.json';
   // 불러올 때 같은 화면에서 이어 가도록 화면 번호도 남긴다
-  const blob = new Blob([JSON.stringify({ ...state, screen: stepNo }, null, 1)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ ...state, author: who, screen: stepNo }, null, 1)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = (state.title || '업무흐름') + '.json';
+  a.download = name;
   a.click();
   URL.revokeObjectURL(a.href);
+  $('savebox').hidden = true;
+  toast(`"${name}" 파일로 저장했습니다.`);
 });
 $('load').addEventListener('click', () => $('file').click());
 // 이 도구에서 저장한 파일인지 확인한다. 아니면 null 을 돌려준다
@@ -2088,6 +2139,11 @@ $('file').addEventListener('change', async ev => {
   }
   const screen = raw.screen;
   delete raw.screen;
+  if (typeof raw.author === 'string' && safeName(raw.author)) {
+    author = safeName(raw.author);
+    try { localStorage.setItem(AUTHOR_KEY, author); } catch {}
+  }
+  delete raw.author;
   tutEnd();
   change(() => { state = raw; sel = null; fitMode = true; });
   // 저장할 때 보던 화면에서 이어 간다. 화면 번호가 없는 예전 파일은 1번부터
@@ -2105,7 +2161,7 @@ $('canvas').addEventListener('click', ev => {
   if (ev.target === $('canvas') || ev.target === $('stage') || ev.target === $('sizer') || ev.target === $('edges') || ev.target === $('items')) select(null);
 });
 window.addEventListener('keydown', ev => {
-  if (!$('welcome').hidden || !$('intro').hidden || !$('aidraft').hidden) return;
+  if (!$('welcome').hidden || !$('intro').hidden || !$('aidraft').hidden || !$('savebox').hidden) return;
   const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
   if ((ev.ctrlKey || ev.metaKey) && ev.key === 'z' && !typing) { ev.preventDefault(); undo(); }
   if (typing) return;
@@ -2192,12 +2248,12 @@ $('welcome-tutorial').addEventListener('click', () => {
 });
 $('intro-start').addEventListener('click', () => { $('intro').hidden = true; tutStart(); });
 $('intro-back').addEventListener('click', () => { $('intro').hidden = true; openWelcome(); });
-['welcome', 'intro', 'aidraft'].forEach(id => {
+['welcome', 'intro', 'aidraft', 'savebox'].forEach(id => {
   $(id).addEventListener('keydown', ev => {
     if (ev.key === 'Escape') { $(id).hidden = true; return; }
     if (ev.key !== 'Tab') return;
     // 팝업 안에서만 키보드 이동
-    const items = [...$(id).querySelectorAll('button, textarea')];
+    const items = [...$(id).querySelectorAll('button, textarea, input')];
     const first = items[0], last = items[items.length - 1];
     if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
     if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
