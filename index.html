@@ -1,0 +1,2906 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>업무 흐름 그리기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* ── 색·모양 기준 ───────────────────────────────────── */
+:root {
+  --primary: #5B4CF0; --primary-ink: #FFFFFF;
+  --accent: #5B4CF0; --accent-soft: #EEECFE;
+  --ink: #1E1E2A; --muted: #666676; --line: #E6E6EE;
+  --bg: #FFFFFF; --canvas: #F8F8FB; --dot: #D5D5E3;
+  --card: #FFFFFF; --card-line: #E2E2EB; --edge: #A3A3B6;
+  --each: #5B4CF0; --each-soft: #F3F1FF;
+  --until: #B45309; --until-soft: #FFF8EC;
+  --split: #0B7F72; --split-soft: #E6F6F4;
+  --parallel: #2563EB; --parallel-soft: #EAF1FE;
+  --r-card: 14px; --r-ui: 10px;
+  --shadow: 0 1px 2px rgba(20,20,40,.05), 0 6px 16px rgba(20,20,40,.07);
+  --shadow-hi: 0 2px 4px rgba(20,20,40,.08), 0 10px 24px rgba(20,20,40,.12);
+  --grip: #F5F5FA;
+  --part-ai: #5B4CF0; --part-self: #2A2A3A;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-size: 15px; line-height: 1.45; word-break: keep-all;
+  display: flex; flex-direction: column; overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* ── 머리 ─────────────────────────────────────────── */
+.hd {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--bg);
+}
+.logo {
+  width: 38px; height: 38px; border-radius: var(--r-ui); flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary); color: var(--primary-ink);
+}
+.title-wrap { flex: 1 1 240px; min-width: 200px; }
+#title {
+  display: block; width: 100%; padding: 0; border: 0; background: transparent;
+  font-size: 18px; font-weight: 700; line-height: 1.3;
+}
+#title:focus { outline: none; }
+#title::placeholder { color: var(--muted); font-weight: 500; }
+.sub-row { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+#cycle { border: 0; background: transparent; color: var(--muted); font-size: 13px; padding: 0 2px; cursor: pointer; }
+
+.steps { display: flex; align-items: center; gap: 4px; }
+.steps span {
+  min-width: 26px; height: 26px; padding: 0 8px; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: var(--muted); background: var(--canvas); white-space: nowrap;
+}
+.steps span.on { padding: 0 12px; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+
+.acts { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  padding: 7px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-ui);
+  font-size: 14px; font-weight: 500; white-space: nowrap; transition: border-color .12s, background .12s;
+}
+.btn:hover { border-color: var(--muted); }
+.btn:disabled { color: var(--line); cursor: default; border-color: var(--line); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.ghost:hover { background: var(--canvas); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); font-weight: 700; padding: 8px 16px; }
+.btn.primary:hover { filter: brightness(1.12); }
+.btn.danger { color: #B42318; border-color: #F4C7C3; }
+.btn.danger:hover { border-color: #B42318; background: #FEF3F2; }
+.btn.wide { display: block; width: 100%; text-align: left; }
+.sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+
+/* ── 3단 배치 ──────────────────────────────────────── */
+.work { flex: 1; min-height: 0; display: grid; grid-template-columns: 252px minmax(0, 1fr) 300px; }
+.palette, .panel { overflow-y: auto; padding: 16px; background: var(--bg); }
+.palette { border-right: 1px solid var(--line); }
+.panel { border-left: 1px solid var(--line); }
+.sub { margin: 18px 0 4px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.sub:first-child { margin-top: 0; }
+.hint { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.chip {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 8px; padding: 10px;
+  text-align: left; background: var(--bg); border: 1px solid var(--line); border-radius: calc(var(--r-ui) + 2px);
+  cursor: grab; touch-action: none; user-select: none; transition: box-shadow .12s, border-color .12s, transform .12s;
+}
+.chip:hover { border-color: var(--edge); box-shadow: var(--shadow); transform: translateY(-1px); }
+.chip b { display: block; font-size: 14.5px; font-weight: 700; }
+.chip small { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.ico {
+  width: 34px; height: 34px; border-radius: 9px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+.ico.parallel { background: var(--parallel-soft); color: var(--parallel); }
+.ico.split { background: var(--split-soft); color: var(--split); }
+.ico.each { background: var(--each-soft); color: var(--each); }
+.ico.until { background: var(--until-soft); color: var(--until); }
+
+/* ── 캔버스 ────────────────────────────────────────── */
+.canvas-wrap {
+  position: relative; min-width: 0; min-height: 0; background-color: var(--canvas);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+#canvas { position: absolute; inset: 0; overflow: auto; }
+#sizer { position: relative; }
+#stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+#edges { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 2; overflow: visible; }
+#edges .hit { stroke: transparent; stroke-width: 14; fill: none; pointer-events: stroke; cursor: pointer; }
+#edges .line { stroke: var(--edge); stroke-width: 2; fill: none; }
+#edges .line.sel { stroke: var(--accent); stroke-width: 3; }
+#edges .line.back { stroke-dasharray: 2 6; stroke-linecap: round; stroke-width: 2; }
+#edges .line.back.each { stroke: var(--each); }
+#edges .line.back.until { stroke: var(--until); }
+#edges .tmp { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
+.m-edge { fill: var(--edge); }
+.m-accent { fill: var(--accent); }
+.m-each { fill: var(--each); }
+.m-until { fill: var(--until); }
+
+
+.zoom {
+  position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 2px; z-index: 6; padding: 3px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: calc(var(--r-ui) + 3px); box-shadow: var(--shadow);
+}
+.zoom .btn { padding: 3px 9px; font-size: 13.5px; border: 0; background: transparent; }
+.zoom .btn:hover { background: var(--canvas); }
+.zoom output { padding: 0 6px; font-size: 13px; color: var(--muted); min-width: 40px; text-align: center; }
+
+/* ── 단계 카드 ─────────────────────────────────────── */
+.node {
+  position: absolute; width: 240px; height: 68px; z-index: 3;
+  background: var(--card); border: 1px solid var(--card-line); border-radius: var(--r-card);
+  box-shadow: var(--shadow); transition: box-shadow .12s, border-color .12s;
+}
+.node:hover { box-shadow: var(--shadow-hi); }
+.node.sel { outline: 2px solid var(--accent); outline-offset: -1px; box-shadow: 0 0 0 5px var(--accent-soft), var(--shadow-hi); }
+.node.ghosted { opacity: .35; }
+.node.target { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px var(--accent-soft); }
+.node .head {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--grip); border-radius: var(--r-card) 0 0 var(--r-card);
+  cursor: grab; touch-action: none; user-select: none;
+}
+.node .num {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 700;
+}
+.node.in-each .num { background: var(--each); color: #FFF; }
+.node.in-until .num { background: var(--until); color: #FFF; }
+.node.is-split .num { background: var(--split); color: #FFF; }
+.node .del {
+  position: absolute; right: -9px; top: -9px; z-index: 6; display: none; width: 22px; height: 22px; padding: 0;
+  border: 1px solid var(--line); border-radius: 50%; background: var(--bg); color: var(--muted); font-size: 14px; line-height: 1;
+}
+.node .del:hover { color: #B42318; border-color: #B42318; }
+.node.sel .del { display: block; }
+.node textarea {
+  position: absolute; left: 40px; top: 0; bottom: 0; width: 200px; height: auto; padding: 0 10px;
+  border: 0; resize: none; overflow: hidden; background: transparent;
+  font-size: 15px; line-height: 1.3; font-weight: 600; word-break: keep-all;
+}
+.node textarea::placeholder { color: var(--muted); font-weight: 400; }
+.node textarea:focus { outline: none; }
+
+/* 추가 버튼 */
+.plus {
+  position: absolute; width: 24px; height: 24px; padding: 0; z-index: 4;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 50%; color: var(--muted);
+  font-size: 16px; line-height: 1; font-weight: 600; box-shadow: var(--shadow);
+  touch-action: none; transition: background .12s, color .12s, transform .12s;
+}
+.plus:hover { background: var(--accent); border-color: var(--accent); color: #FFF; transform: scale(1.12); }
+.plus.slot-hot { background: var(--accent); border-color: var(--accent); color: #FFF; transform: scale(1.5); }
+.node .plus.after { left: 108px; bottom: -38px; }
+.node .plus.after::before { content: ""; position: absolute; left: 10px; top: -14px; width: 2px; height: 13px; background: var(--edge); }
+.node .plus.before { left: 108px; top: -38px; display: none; }
+.node .plus.right { right: -34px; top: 22px; display: none; }
+.node.sel .plus.right, .node.sel .plus.before { display: block; }
+.dragging-slot .plus { border-color: var(--accent); color: var(--accent); }
+.dragging-slot .node .plus.before { display: block; }
+
+/* 화살표 연결점 */
+.link {
+  position: absolute; right: 18px; bottom: -7px; width: 13px; height: 13px; padding: 0; z-index: 5;
+  background: var(--bg); border: 2px solid var(--accent); border-radius: 50%; cursor: crosshair; touch-action: none;
+}
+.link::after { content: ""; position: absolute; inset: -9px; }
+.link:hover { background: var(--accent); transform: scale(1.25); }
+
+/* ── 되풀이 묶음 ───────────────────────────────────── */
+.group {
+  position: absolute; z-index: 1; cursor: pointer; border-radius: calc(var(--r-card) + 6px);
+  border: 1.5px dashed var(--each); background: var(--each-soft);
+}
+.group.until { border-color: var(--until); background: var(--until-soft); }
+.group.sel { box-shadow: 0 0 0 3px var(--accent-soft); border-style: solid; }
+.tag {
+  position: absolute; z-index: 3; max-width: 150px; height: 22px; padding: 0 10px; border: 0; border-radius: 11px;
+  background: var(--each); color: #FFF; font-size: 12.5px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tag.until { background: var(--until); }
+
+/* ── 갈림 조건 이름표 ──────────────────────────────── */
+.edge-label {
+  position: absolute; z-index: 4; transform: translate(-50%, -50%); max-width: 150px; padding: 2px 9px; border-radius: 11px;
+  background: var(--split-soft); border: 1px solid var(--split); color: var(--split);
+  font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.edge-label.empty { border-style: dashed; font-weight: 500; background: var(--bg); }
+
+/* ── 빈 화면 ───────────────────────────────────────── */
+#empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 5; pointer-events: none; }
+#empty.show { display: flex; }
+#empty .box {
+  pointer-events: auto; width: min(360px, 88%); padding: 28px; text-align: center;
+  background: var(--bg); border: 1.5px dashed var(--edge); border-radius: calc(var(--r-card) + 6px); box-shadow: var(--shadow);
+}
+#empty.hot .box { border-color: var(--accent); background: var(--accent-soft); }
+#empty .ico { margin: 0 auto 12px; width: 44px; height: 44px; border-radius: 12px; }
+#empty h2 { margin: 0 0 4px; font-size: 18px; }
+#empty p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+
+/* ── 오른쪽 패널 ───────────────────────────────────── */
+.kh { margin: 0 0 12px; font-size: 18px; font-weight: 700; }
+.panel .sub { margin-top: 18px; }
+.panel label.field { display: block; margin: 0 0 4px; font-weight: 600; font-size: 14px; }
+.panel input[type=text] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-ui); margin-bottom: 12px; background: var(--bg); }
+.panel input[type=text]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.panel input::placeholder { color: var(--muted); }
+.panel .btn { margin-bottom: 6px; }
+.panel .row { display: flex; gap: 6px; }
+.panel .row .btn { flex: 1; white-space: normal; }
+.panel ul { margin: 0 0 8px; padding: 0; list-style: none; }
+.panel li { padding: 5px 0; font-size: 14px; }
+.panel li label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.panel li input { margin-top: 3px; accent-color: var(--accent); }
+.tb { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 14px; }
+.tb td { padding: 6px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+.tb td:last-child { text-align: right; font-weight: 700; color: var(--ink); }
+.tb tr:last-child td { border-bottom: 0; }
+.todo {
+  display: block; width: 100%; padding: 9px 11px; margin-bottom: 6px; text-align: left; font-size: 13.5px; font-weight: 500;
+  background: var(--accent-soft); color: var(--ink); border: 0; border-radius: var(--r-ui); transition: filter .12s;
+}
+.todo:hover { filter: brightness(.96); }
+.note { margin: 14px 0 0; padding: 10px 11px; background: var(--canvas); border-radius: var(--r-ui); font-size: 12.5px; color: var(--muted); }
+
+/* ── 드래그 표시·안내 ──────────────────────────────── */
+#ghost {
+  position: fixed; z-index: 50; pointer-events: none; display: none; padding: 7px 13px; max-width: 240px; border-radius: var(--r-ui);
+  background: var(--primary); color: var(--primary-ink); font-size: 14px; font-weight: 600; box-shadow: var(--shadow-hi);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toast {
+  position: absolute; left: 12px; bottom: 12px; z-index: 7; display: none; width: fit-content; max-width: calc(100% - 300px);
+  padding: 9px 14px; background: var(--ink); color: var(--bg); font-size: 14px; border-radius: var(--r-ui); box-shadow: var(--shadow-hi);
+}
+#toast.show { display: block; }
+body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; }
+
+/* ── 2번 화면: 일 나누기 ─────────────────────────── */
+.pal { display: contents; }
+body.locked .plus, body.locked .link, body.locked .del { display: none !important; }
+body.locked .node { cursor: pointer; }
+body.locked .node .head { cursor: pointer; }
+body.locked .node textarea { pointer-events: none; }
+body.locked .edge-label, body.locked .tag { pointer-events: none; }
+body.locked #edges .hit { pointer-events: none; }
+body.locked .group { cursor: default; }
+body.locked .node .num { background: #FFF; color: var(--ink); }
+body.locked .node.pending { border: 1.5px dashed var(--edge); box-shadow: none; }
+body.locked .node.off { opacity: .45; }
+body.step5 .node { cursor: default; }
+.node.do-ai { background: #F3F1FF; border-color: var(--part-ai); }
+.node.do-ai .head { background: var(--part-ai); }
+.node.do-me { background: #F1F1F5; border-color: var(--part-self); }
+.node.do-me .head { background: var(--part-self); }
+.node.do-ai.do-me { background: #F7F6FD; border-color: #8B82E8; }
+.node.do-ai.do-me .head { background: linear-gradient(135deg, var(--part-ai) 50%, var(--part-self) 50%); }
+.part-tag {
+  position: absolute; right: 10px; top: -10px; z-index: 5; height: 20px; max-width: 200px; padding: 0 8px; border-radius: 10px; overflow: hidden;
+  font-size: 11.5px; font-weight: 700; line-height: 20px; color: #FFF; background: var(--muted); white-space: nowrap; text-overflow: ellipsis;
+}
+.part-tag.ai { background: var(--part-ai); }
+.part-tag.me { background: var(--part-self); }
+.part-tag.both { background: linear-gradient(90deg, var(--part-ai), var(--part-self)); }
+.part-tag.dim { background: var(--muted); }
+.part-tag.none { background: var(--bg); color: var(--muted); border: 1px dashed var(--edge); line-height: 18px; }
+.ico.act { background: var(--accent-soft); color: var(--accent); }
+.ico.do-ai { background: var(--part-ai); color: #FFF; }
+.ico.do-me { background: var(--part-self); color: #FFF; }
+.do-opt {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 8px; padding: 10px; text-align: left;
+  background: var(--bg); border: 1px solid var(--line); border-radius: calc(var(--r-ui) + 2px);
+}
+.do-opt:hover { border-color: var(--edge); }
+.do-opt b { display: block; font-size: 14.5px; font-weight: 700; }
+.do-opt small { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.do-opt .mark { margin-left: auto; flex: none; width: 20px; height: 20px; border: 1.5px solid var(--edge); border-radius: 6px; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.do-opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.do-opt[aria-pressed="true"] .mark { background: var(--accent); border-color: var(--accent); }
+.do-opt[data-do="me"][aria-pressed="true"] { border-color: var(--part-self); background: #F1F1F5; }
+.do-opt[data-do="me"][aria-pressed="true"] .mark { background: var(--part-self); border-color: var(--part-self); }
+.do-list { margin-bottom: 6px; }
+.do-item { display: block; width: 100%; padding: 7px 0; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.do-item:hover { color: var(--accent); }
+.opt-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.opt-chip { padding: 6px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; font-size: 13.5px; }
+.opt-chip:hover { border-color: var(--edge); }
+.opt-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #FFF; font-weight: 600; }
+.prep-list { margin: 0 0 10px; padding: 0; list-style: none; }
+.panel .prep-list li { padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.prep-list small { display: block; font-size: 12.5px; color: var(--muted); }
+.prompt-card { margin-bottom: 10px; padding: 10px 12px; background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-ui); }
+.prompt-card b { display: block; margin-bottom: 4px; font-size: 14px; }
+.prompt-card pre { margin: 0 0 8px; max-height: 150px; overflow: auto; font: inherit; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: keep-all; color: var(--muted); }
+.result-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.result-acts .hint { flex-basis: 100%; margin: 2px 0 0; }
+body.step5 .palette { display: none; }
+#print-title { display: none; }
+body.step5 .work { grid-template-columns: minmax(0, 1fr) 440px; grid-template-rows: minmax(0, 1fr); }
+@media print {
+  html, body { height: auto; overflow: visible; display: block; }
+  .hd, .palette, .zoom, .result-acts, .panel .btn, #coach, #spot, #spot-dot, #tip, #toast, .plus, .link { display: none !important; }
+  #print-title { display: block; margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+  .work { display: block !important; }
+  .canvas-wrap { position: static; background: none; break-after: page; }
+  #canvas { position: static; overflow: visible; }
+  .panel { border: 0; overflow: visible; }
+  .prompt-card { break-inside: avoid; }
+  .prompt-card pre { max-height: none; overflow: visible; color: var(--ink); }
+}
+.asks { margin: 0; padding: 0; list-style: none; }
+.asks li { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.asks li:last-child { border-bottom: 0; }
+.asks b { display: block; font-weight: 600; }
+.asks span { color: var(--muted); font-size: 13px; }
+
+/* ── 시작 안내 팝업 ───────────────────────────────── */
+[hidden] { display: none !important; }
+.modal-back {
+  position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(30,30,42,.45);
+}
+.modal {
+  width: min(600px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; padding: 28px;
+  background: var(--bg); border-radius: calc(var(--r-card) + 4px); box-shadow: 0 20px 60px rgba(20,20,40,.3);
+}
+.modal .ico { width: 44px; height: 44px; border-radius: 12px; margin-bottom: 12px; }
+.modal h2 { margin: 0 0 6px; font-size: 22px; line-height: 1.3; }
+.modal > p { margin: 0 0 16px; color: var(--muted); }
+.modal ol { margin: 0 0 16px; padding: 0; list-style: none; }
+.modal li { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+.modal li:last-child { border-bottom: 0; }
+.modal li b { flex: none; width: 76px; font-weight: 700; }
+.modal li i {
+  flex: none; width: 22px; height: 22px; border-radius: 50%; text-align: center; font-style: normal; font-size: 12.5px; font-weight: 700;
+  line-height: 22px; background: var(--accent-soft); color: var(--accent);
+}
+.modal .note { margin: 0 0 18px; }
+.modal-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.modal-acts .btn { padding: 10px 14px; }
+.modal-acts .primary { flex: 1 1 220px; }
+#welcome .modal-acts .primary { flex-basis: 100%; }
+#welcome .modal-acts .btn:not(.primary) { flex: 1 1 0; }
+
+/* ── 버튼 설명 ─────────────────────────────────────── */
+#tip {
+  position: fixed; left: 0; top: 0; z-index: 70; display: none; width: max-content; max-width: 260px; padding: 6px 10px; pointer-events: none;
+  background: var(--ink); color: #FFF; border-radius: 8px; font-size: 13px; font-weight: 500; line-height: 1.4; box-shadow: var(--shadow-hi);
+}
+#tip.show { display: block; }
+#tip::after {
+  content: ""; position: absolute; left: var(--arrow, 50%); bottom: -4px; width: 8px; height: 8px; margin-left: -4px;
+  background: var(--ink); transform: rotate(45deg);
+}
+#tip.below::after { bottom: auto; top: -4px; }
+
+/* ── AI에게 초안 받기 ─────────────────────────────── */
+.ai-step { display: flex; gap: 10px; margin-bottom: 14px; }
+.ai-step > i {
+  flex: none; width: 24px; height: 24px; border-radius: 50%; text-align: center; font-style: normal; font-size: 13px; font-weight: 700;
+  line-height: 24px; background: var(--accent-soft); color: var(--accent);
+}
+.ai-step > div { flex: 1; min-width: 0; }
+.ai-step b { display: block; margin-bottom: 4px; font-size: 15px; }
+.ai-step p { margin: 0 0 6px; font-size: 13.5px; color: var(--muted); }
+.ai-step textarea {
+  display: block; width: 100%; padding: 8px 10px; resize: vertical; font-size: 13px; line-height: 1.45;
+  background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-ui);
+}
+.ai-error { margin: 6px 0 0; padding: 8px 10px; font-size: 13.5px; color: #B42318; background: #FEF3F2; border-radius: var(--r-ui); }
+.ai-review { margin-bottom: 14px; padding: 12px; background: var(--accent-soft); border-radius: var(--r-ui); }
+.ai-review .sub { margin-top: 0; }
+.ai-review ul { margin: 0 0 8px; padding-left: 18px; font-size: 13.5px; }
+.ai-review li { display: list-item; margin-bottom: 4px; list-style: disc; }
+
+/* ── 튜토리얼: 할 곳만 밝히고 옆에 안내 ─────────────── */
+#spot { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 45; pointer-events: none; transition: opacity .15s; }
+#spot .dim { fill: rgba(30,30,42,.55); }
+#spot-path { fill: none; stroke: #FFF; stroke-width: 2.5; stroke-dasharray: 7 7; stroke-linecap: round; }
+#spot-head { fill: #FFF; }
+#spot-dot {
+  position: fixed; left: 0; top: 0; z-index: 46; display: none; width: 16px; height: 16px; pointer-events: none;
+  background: #FFF; border: 4px solid var(--accent); border-radius: 50%;
+  offset-rotate: 0deg; animation: spot-move 1.9s ease-in-out infinite;
+}
+@keyframes spot-move { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+body.dragging #spot, body.dragging #spot-dot { opacity: 0; }
+.coach {
+  position: fixed; z-index: 60; width: 348px; padding: 16px 18px;
+  background: var(--bg); border: 2px solid var(--accent); border-radius: 16px; box-shadow: 0 16px 48px rgba(20,20,40,.4);
+  transition: left .22s ease, top .22s ease, opacity .15s;
+}
+body.dragging .coach { opacity: 0; pointer-events: none; }
+.coach .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--muted); }
+.coach .count { flex: none; font-weight: 700; color: var(--accent); font-size: 14px; }
+.coach .bar { height: 5px; margin: 7px 0 12px; border-radius: 3px; background: var(--accent-soft); overflow: hidden; }
+.coach .bar i { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width .25s; }
+.coach h3 { margin: 0 0 4px; font-size: 18px; line-height: 1.35; }
+.coach .why { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+.coach .do { margin: 0; padding: 10px 12px; font-size: 15px; font-weight: 600; line-height: 1.5; background: var(--accent-soft); border-radius: var(--r-ui); }
+.coach .do b { color: var(--accent); font-weight: 700; }
+.coach .enter { margin: 7px 0 0; font-size: 13px; color: var(--muted); }
+.coach .recap { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 0; padding: 0; list-style: none; }
+.coach .recap li { padding: 2px 9px; font-size: 12.5px; border-radius: 11px; background: var(--grip); }
+.coach .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.coach .acts .primary { flex: 1 1 auto; }
+.coach.ok { border-color: var(--split); }
+.coach.ok h3 { color: var(--split); }
+.coach.ok h3::before { content: "✓ "; }
+.coach.ok .bar i { background: var(--split); }
+.coach .tip {
+  position: absolute; display: none; width: 14px; height: 14px; background: var(--bg); transform: rotate(45deg);
+  border: solid var(--accent); border-width: 0;
+}
+.coach .tip.left { display: block; left: -9px; border-width: 0 0 2px 2px; }
+.coach .tip.right { display: block; right: -9px; border-width: 2px 2px 0 0; }
+.coach .tip.up { display: block; top: -9px; border-width: 2px 0 0 2px; }
+.coach .tip.down { display: block; bottom: -9px; border-width: 0 2px 2px 0; }
+.coach.ok .tip { border-color: var(--split); }
+.coach.sheet { left: 8px !important; right: 8px; top: auto !important; bottom: 8px; width: auto; max-height: 46vh; overflow-y: auto; }
+.coach.sheet .tip { display: none; }
+
+/* ── 가상 상황 소개 ───────────────────────────────── */
+.modal.wide { width: min(820px, 100%); }
+.intro-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; margin-bottom: 20px; }
+.intro-tag { display: inline-block; margin-bottom: 10px; padding: 3px 11px; font-size: 13px; font-weight: 700; border-radius: 12px; background: var(--accent); color: #FFF; }
+.intro-how { margin: 0 0 20px; padding: 0; list-style: none; }
+.modal .intro-how li { align-items: flex-start; padding: 8px 0; }
+.mini { padding: 14px; background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-card); }
+.mini-cap { margin-bottom: 10px; font-size: 13px; font-weight: 700; }
+.mini-row { position: relative; display: flex; gap: 8px; justify-content: center; }
+.mini-row + .mini-row { margin-top: 14px; }
+.mini-row + .mini-row::before { content: ""; position: absolute; left: 50%; top: -14px; width: 2px; height: 14px; background: var(--edge); }
+.mini-card { flex: 1 1 0; max-width: 200px; padding: 6px 8px; font-size: 12.5px; font-weight: 600; text-align: center; background: var(--bg); border: 1px solid var(--card-line); border-radius: 8px; }
+.mini-box { flex: 1 1 0; max-width: 240px; padding: 6px; border: 1.5px dashed; border-radius: 10px; }
+.mini-box .mini-card { max-width: none; display: block; }
+.mini-box small { display: block; margin-bottom: 4px; font-size: 11.5px; font-weight: 700; text-align: center; }
+.mini-box.each { border-color: var(--each); color: var(--each); background: var(--each-soft); }
+.mini-box.until { border-color: var(--until); color: var(--until); background: var(--until-soft); }
+.mini-box .mini-card { color: var(--ink); }
+@media (max-width: 720px) { .intro-grid { grid-template-columns: minmax(0, 1fr); } }
+.tut-target {
+  position: relative; z-index: 8; outline: 2px solid var(--accent) !important; outline-offset: 2px;
+  animation: tut-pulse 1.4s ease-in-out infinite;
+}
+.plus.tut-target, .link.tut-target { position: absolute; }
+.node.tut-target { position: absolute; z-index: 3; }
+.chip.tut-target { position: relative; }
+#title.tut-target, #cycle.tut-target { border-radius: 4px; }
+@keyframes tut-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91,76,240,.45); }
+  50% { box-shadow: 0 0 0 7px rgba(91,76,240,0); }
+}
+@media (prefers-reduced-motion: reduce) { .tut-target { animation: none; } }
+
+/* ── 좁은 창 (Zoom 옆에 띄울 때) ───────────────────── */
+@media (max-width: 1240px) {
+  .steps span:not(.on), .sep { display: none; }
+  .work { grid-template-columns: minmax(0, 1fr) 280px; grid-template-rows: auto minmax(0, 1fr); }
+  .palette {
+    grid-column: 1 / -1; display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto;
+    border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  .palette .sub, .palette .hint, .chip small { display: none; }
+  .chip { width: auto; margin: 0; flex: none; white-space: nowrap; padding: 5px 10px 5px 6px; gap: 7px; }
+  .chip b { font-size: 13.5px; }
+  .ico { width: 26px; height: 26px; border-radius: 7px; }
+  .ico svg.i { width: 15px; height: 15px; }
+}
+@media (max-width: 820px) {
+  body { overflow: auto; }
+  .work { display: flex; flex-direction: column; flex: none; }
+  .palette { flex: none; }
+  .canvas-wrap { height: 70vh; flex: none; }
+  .panel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <span class="logo"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v3a3 3 0 0 0 3 3H14"/></svg></span>
+  <div class="title-wrap">
+    <input id="title" type="text" maxlength="60" aria-label="업무 제목" placeholder="업무 제목을 적어 주세요">
+    <div class="sub-row">
+      <label for="cycle">다시 하는 주기</label>
+      <select id="cycle">
+        <option>한 번만</option>
+        <option>매주</option>
+        <option>매월</option>
+        <option>매 학기</option>
+        <option>매년</option>
+        <option>필요할 때</option>
+      </select>
+    </div>
+  </div>
+  <nav class="steps" aria-label="진행 단계">
+    <span class="on" aria-current="step">1 흐름 그리기</span>
+    <span title="일 나누기">2</span>
+    <span title="확인 기준">3</span>
+    <span title="자료 준비">4</span>
+    <span title="결과 저장">5</span>
+  </nav>
+  <span class="sep"></span>
+  <div class="acts">
+    <button class="btn ghost" id="undo" data-tip="되돌리기 (Ctrl+Z)" aria-label="되돌리기"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
+    <button class="btn ghost" id="help" data-tip="시작 안내를 다시 봅니다">사용 안내</button>
+    <button class="btn ghost" id="reset" data-tip="내용을 비우고 처음부터 시작합니다">새로 시작</button>
+    <button class="btn ghost" id="sample" data-tip="완성된 예시를 불러옵니다">예시 보기</button>
+    <button class="btn" id="save" data-tip="이어서 할 수 있게 지금 내용을 파일로 저장합니다. 다른 컴퓨터에서도 불러올 수 있습니다">작업 파일 저장</button>
+    <button class="btn" id="load" data-tip="작업 파일 저장으로 만든 파일을 열어 이어서 합니다">불러오기</button>
+    <input type="file" id="file" accept=".json" hidden>
+    <button class="btn" id="prev" hidden>이전: 흐름 그리기</button>
+    <button class="btn primary" id="next">다음: 일 나누기</button>
+  </div>
+</header>
+
+<div id="print-title"></div>
+<main class="work">
+  <aside class="palette" aria-label="카드 넣기">
+    <div class="pal" id="pal-flow">
+    <p class="sub">단계 넣기</p>
+    <p class="hint">화살표 위 + 자리에 끌어다 놓습니다.</p>
+    <button class="chip" data-kind="new"><span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></span><span><b>새 단계</b><small>업무의 할 일 하나</small></span></button>
+
+    <p class="sub">흐름 구분하기</p>
+    <p class="hint">단계 카드 위에 끌어다 놓습니다.</p>
+    <button class="chip" data-kind="parallel"><span class="ico parallel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></svg></span><span><b>동시에 진행</b><small>옆에 단계를 나란히 추가</small></span></button>
+    <button class="chip" data-kind="split"><span class="ico split"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M15 6a9 9 0 0 0-9 9"/></svg></span><span><b>조건에 따라 갈림</b><small>경우에 따라 한쪽만 진행</small></span></button>
+    <button class="chip" data-kind="each"><span class="ico each"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span><span><b>건마다 되풀이</b><small>답안 120건처럼 건별로 같은 일</small></span></button>
+    <button class="chip" data-kind="until"><span class="ico until"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></span><span><b>만족할 때까지 되풀이</b><small>초안을 읽고 고치는 일</small></span></button>
+
+    <p class="sub">카드 다루기</p>
+    <p class="hint">번호 부분을 끌면 다른 자리로 옮겨집니다. 아래쪽 동그라미를 다른 카드로 끌면 화살표가 이어집니다.</p>
+    </div>
+    <div class="pal" id="pal-divide" hidden>
+    <p class="sub">일 나누기</p>
+    <p class="hint">단계 카드 위에 끌어다 놓습니다. 한 단계에 둘 다 놓아도 됩니다.</p>
+    <button class="chip" data-kind="do-ai"><span class="ico do-ai"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/></svg></span><span><b>AI에게 시키기</b><small>AI에게 시키고 싶은 일</small></span></button>
+    <button class="chip" data-kind="do-me"><span class="ico do-me"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span><b>내가 하기</b><small>내가 해야 하는 일</small></span></button>
+    <p class="sub">흐름을 고치려면</p>
+    <p class="hint">"이전: 흐름 그리기"로 돌아갑니다. 나눈 내용은 그대로 남습니다.</p>
+    </div>
+    <div class="pal" id="pal-verify" hidden>
+    <p class="sub">확인 방법</p>
+    <p class="hint">AI에게 시킨 단계 카드 위에 끌어다 놓습니다.</p>
+    <button class="chip" data-kind="vf-all"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 7 9.5 15.5 6 12"/><path d="m22 7-8.5 8.5"/></svg></span><span><b>전부 확인</b><small>결과를 모두 읽고 씁니다</small></span></button>
+    <button class="chip" data-kind="vf-sample"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span><b>일부만 확인</b><small>표본 몇 건만 봅니다</small></span></button>
+    <button class="chip" data-kind="vf-none"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span><span><b>그대로 사용</b><small>확인 없이 바로 씁니다</small></span></button>
+    </div>
+    <div class="pal" id="pal-data" hidden>
+    <p class="sub">자료 종류</p>
+    <p class="hint">AI에게 시킨 단계 카드 위에 끌어다 놓습니다.</p>
+    <button class="chip" data-kind="dk-table"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg></span><span><b>엑셀·표</b></span></button>
+    <button class="chip" data-kind="dk-doc"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg></span><span><b>문서·PDF</b></span></button>
+    <button class="chip" data-kind="dk-hwp"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M8 13h8M8 17h5"/></svg></span><span><b>한글 파일</b></span></button>
+    <button class="chip" data-kind="dk-web"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><span><b>게시판·웹 글</b></span></button>
+    <button class="chip" data-kind="dk-media"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span><b>녹음·영상</b></span></button>
+    <button class="chip" data-kind="dk-none"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></span><span><b>자료 없음</b></span></button>
+    <p class="sub">자료 위치</p>
+    <button class="chip" data-kind="dp-pc"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span><span><b>내 PC</b></span></button>
+    <button class="chip" data-kind="dp-cloud"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.6-8 6 6 0 0 1 11.5 1.5A3.5 3.5 0 0 1 17 18z"/></svg></span><span><b>클라우드 드라이브</b></span></button>
+    <button class="chip" data-kind="dp-school"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-5 9 5-9 5z"/><path d="M7 11.5V16c3 2 7 2 10 0v-4.5"/></svg></span><span><b>학교 시스템</b></span></button>
+    <button class="chip" data-kind="dp-mail"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><span><b>메일·메신저</b></span></button>
+    </div>
+  </aside>
+
+  <section class="canvas-wrap" aria-label="업무 흐름도">
+    <div id="canvas">
+      <div id="sizer">
+        <div id="stage">
+          <svg id="edges" aria-hidden="true">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path class="m-edge" d="M0 0 L10 5 L0 10 z"/>
+              </marker>
+              <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path class="m-accent" d="M0 0 L10 5 L0 10 z"/>
+              </marker>
+              <marker id="arrow-each" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path class="m-each" d="M0 0 L10 5 L0 10 z"/>
+              </marker>
+              <marker id="arrow-until" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path class="m-until" d="M0 0 L10 5 L0 10 z"/>
+              </marker>
+            </defs>
+            <g id="edge-layer"></g>
+            <path id="tmp" class="tmp" style="display:none"></path>
+          </svg>
+          <div id="items"></div>
+        </div>
+      </div>
+    </div>
+    <div id="empty">
+      <div class="box">
+        <span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v3a3 3 0 0 0 3 3H14"/></svg></span>
+        <h2>첫 단계를 적어 보세요</h2>
+        <p>이 업무를 시작할 때 맨 처음 하는 일입니다.</p>
+        <button class="btn primary" id="first">첫 단계 추가</button>
+      </div>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div class="zoom">
+      <button class="btn" id="zoom-out" data-tip="축소" aria-label="축소">−</button>
+      <output id="zoom-val">100%</output>
+      <button class="btn" id="zoom-in" data-tip="확대" aria-label="확대">+</button>
+      <button class="btn" id="zoom-fit" data-tip="흐름도 전체를 화면에 맞춥니다">화면에 맞춤</button>
+    </div>
+  </section>
+
+  <aside class="panel" id="panel" aria-label="선택한 항목 설정"></aside>
+</main>
+
+<div id="ghost"></div>
+<div id="tip" role="tooltip"></div>
+
+<div class="modal-back" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+  <div class="modal">
+    <span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v3a3 3 0 0 0 3 3H14"/></svg></span>
+    <h2 id="welcome-title">내 업무를 흐름도로 정리합니다</h2>
+    <p>업무를 단계로 나눈 뒤, AI에게 맡길 부분과 직접 할 부분을 정합니다. 다섯 단계로 진행합니다.</p>
+    <ol>
+      <li><i>1</i><b>흐름 그리기</b><span>업무를 단계로 나누고 순서를 정합니다.</span></li>
+      <li><i>2</i><b>일 나누기</b><span>AI에게 시킬 일과 내가 할 일을 나눕니다.</span></li>
+      <li><i>3</i><b>확인 기준</b><span>AI 결과를 어떻게 확인할지 고릅니다.</span></li>
+      <li><i>4</i><b>자료 준비</b><span>AI에게 줄 자료를 고르면 준비할 일이 나옵니다.</span></li>
+      <li><i>5</i><b>결과 저장</b><span>흐름도와 AI에게 줄 지시문을 저장합니다.</span></li>
+    </ol>
+    <p class="note">입력한 내용은 이 브라우저에만 저장되어 새로고침해도 남고, 서버로 보내지 않습니다. 학생 이름이나 성적은 적지 마세요.</p>
+    <div class="modal-acts">
+      <button class="btn primary" id="welcome-tutorial">가상 상황으로 따라 해 보기</button>
+      <button class="btn" id="welcome-ai">AI에게 초안 받아 시작</button>
+      <button class="btn" id="welcome-start">바로 시작</button>
+      <button class="btn" id="welcome-sample">완성된 예시 보기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="aidraft" role="dialog" aria-modal="true" aria-labelledby="aidraft-title" hidden>
+  <div class="modal">
+    <h2 id="aidraft-title">AI에게 초안을 받아 시작합니다</h2>
+    <p>쓰시는 AI 채팅 창에서 질문에 답하면 AI가 흐름도 초안을 만듭니다. 이 도구는 AI를 직접 부르지 않습니다.</p>
+    <div class="ai-step"><i>1</i><div>
+      <b>지시문을 복사합니다</b>
+      <textarea id="ai-prompt" rows="4" readonly aria-label="AI에게 줄 지시문"></textarea>
+      <button class="btn" id="ai-copy" style="margin-top:6px">지시문 복사</button>
+    </div></div>
+    <div class="ai-step"><i>2</i><div>
+      <b>AI 채팅 창에 붙여 넣고 질문에 답합니다</b>
+      <p>학교에서 허용한 AI를 쓰고, 학생 이름이나 성적 같은 개인정보는 적지 마세요.</p>
+    </div></div>
+    <div class="ai-step"><i>3</i><div>
+      <b>AI의 마지막 답을 여기에 붙여 넣습니다</b>
+      <textarea id="ai-result" rows="4" placeholder="AI가 준 결과를 그대로 붙여 넣으세요" aria-label="AI가 준 결과"></textarea>
+      <p class="ai-error" id="ai-error" role="alert" hidden></p>
+    </div></div>
+    <div class="modal-acts">
+      <button class="btn primary" id="ai-load">초안 불러오기</button>
+      <button class="btn" id="ai-back">뒤로</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" hidden>
+  <div class="modal wide">
+    <div class="intro-grid">
+      <div>
+        <span class="intro-tag">가상 상황</span>
+        <h2 id="intro-title">이번 주 토론 게시판에 학생 글 80건이 올라왔습니다</h2>
+        <p>글마다 짧은 피드백을 남겨야 합니다. 이 일을 어떤 순서로 하는지 흐름도로 옮겨 봅니다.</p>
+        <ol class="intro-how">
+          <li><i>1</i><span>제목과 처음 두 단계는 미리 적혀 있습니다. 화면이 어두워지고 지금 할 곳만 밝게 남습니다.</span></li>
+          <li><i>2</i><span>옆에 뜨는 안내대로 하면 다음 단계로 넘어갑니다.</span></li>
+          <li><i>3</i><span>막히면 안내의 "대신 해 주기"를 누르세요.</span></li>
+        </ol>
+      </div>
+      <div class="mini" aria-label="완성될 흐름도">
+        <div class="mini-cap">8단계를 마치면 이런 흐름도가 됩니다</div>
+        <div class="mini-row"><span class="mini-card">게시판 글 내려받기</span></div>
+        <div class="mini-row"><span class="mini-card">학생 이름 가리기</span><span class="mini-card">피드백 기준 정하기</span></div>
+        <div class="mini-row"><div class="mini-box each"><small>글마다 되풀이</small><span class="mini-card">피드백 초안 쓰기</span></div></div>
+        <div class="mini-row"><span class="mini-card">표본 확인하기</span></div>
+        <div class="mini-row"><div class="mini-box until"><small>만족할 때까지</small><span class="mini-card">피드백 고치기</span></div><span class="mini-card" style="align-self:flex-end">그대로 올리기</span></div>
+        <div class="mini-row"><span class="mini-card">게시판에 올리기</span></div>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn primary" id="intro-start">시작하기</button>
+      <button class="btn" id="intro-back">뒤로</button>
+    </div>
+  </div>
+</div>
+
+<svg id="spot" aria-hidden="true" hidden>
+  <defs>
+    <mask id="spot-mask"><rect width="100%" height="100%" fill="#FFF"/><g id="spot-holes"></g></mask>
+    <marker id="spot-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
+  </defs>
+  <rect class="dim" width="100%" height="100%" mask="url(#spot-mask)"/>
+  <path id="spot-path" marker-end="url(#spot-head)"/>
+</svg>
+<div id="spot-dot" aria-hidden="true"></div>
+
+<section class="coach" id="coach" aria-live="polite" aria-label="튜토리얼 안내" hidden>
+  <span class="tip" id="coach-tip"></span>
+  <div class="top"><span>가상 상황 · 토론 글 80건 피드백</span><span class="count" id="coach-count"></span></div>
+  <div class="bar"><i id="coach-bar"></i></div>
+  <h3 id="coach-title"></h3>
+  <p class="why" id="coach-why"></p>
+  <p class="do" id="coach-text"></p>
+  <p class="enter" id="coach-enter">다 적은 뒤 Enter를 누르면 넘어갑니다.</p>
+  <ul class="recap" id="coach-recap" hidden></ul>
+  <div class="acts">
+    <button class="btn" id="coach-auto">대신 해 주기</button>
+    <button class="btn primary" id="coach-next" hidden></button>
+    <button class="btn" id="coach-fresh" hidden>내 업무로 새로 시작</button>
+    <button class="btn ghost" id="coach-end">튜토리얼 끝내기</button>
+  </div>
+</section>
+
+<script>
+// ── 1. 상수 ─────────────────────────────────────────
+const CARD_W = 240, CARD_H = 68;
+const GAP_X = 44, GAP_Y = 44;
+const BOX_X = 44, BOX_TOP = 34, BOX_BOT = 14;  // 되풀이 묶음의 안쪽 여백
+const LABEL_GAP = 24;                          // 갈림 조건 이름표가 들어갈 추가 간격
+const LANE_W = 150;                            // 단계를 건너뛰는 화살표가 지나갈 통로 폭
+const MARGIN = 44;
+const MAX_TEXT = 24;
+const MIN_FIT = 0.75;                          // 자동 맞춤은 이보다 줄이지 않고 스크롤로 넘긴다
+
+const EXAMPLE = {
+  title: '기말 과제 채점과 피드백',
+  cycle: '매 학기',
+  nodes: [
+    { id: 'n1', text: '학교 시스템에서 답안 내려받기', group: null, split: false },
+    { id: 'n2', text: '학생 이름과 학번 가리기', group: null, split: false },
+    { id: 'n3', text: '채점 기준표 다듬기', group: 'g2', split: false },
+    { id: 'n4', text: '점수 초안 매기기', group: 'g1', split: false },
+    { id: 'n5', text: '피드백 초안 쓰기', group: 'g1', split: false },
+    { id: 'n6', text: '일부 답안을 표본으로 확인', group: null, split: true },
+    { id: 'n7', text: '답안을 다시 읽고 점수 조정', group: null, split: false },
+    { id: 'n8', text: '점수 그대로 확정', group: null, split: false },
+    { id: 'n9', text: '학교 시스템에 성적 입력', group: null, split: false },
+  ],
+  edges: [
+    { from: 'n1', to: 'n2', label: '' },
+    { from: 'n1', to: 'n3', label: '' },
+    { from: 'n2', to: 'n4', label: '' },
+    { from: 'n3', to: 'n4', label: '' },
+    { from: 'n4', to: 'n5', label: '' },
+    { from: 'n5', to: 'n6', label: '' },
+    { from: 'n6', to: 'n7', label: '애매한 답안' },
+    { from: 'n6', to: 'n8', label: '문제없는 답안' },
+    { from: 'n7', to: 'n9', label: '' },
+    { from: 'n8', to: 'n9', label: '' },
+  ],
+  groups: [
+    { id: 'g1', type: 'each', unit: '답안', check: '' },
+    { id: 'g2', type: 'until', stop: '' },
+  ],
+};
+const EMPTY = () => ({ title: '', cycle: '한 번만', nodes: [], edges: [], groups: [] });
+const STEP_NAMES = ['흐름 그리기', '일 나누기', '확인 기준', '자료 준비', '결과 저장'];
+const divided = n => !!(n.ai || n.me);
+const VERIFY = {
+  all: { name: '전부 확인', desc: '결과를 모두 읽고 씁니다' },
+  sample: { name: '일부만 확인', desc: '표본 몇 건만 봅니다' },
+  none: { name: '그대로 사용', desc: '확인 없이 바로 씁니다' },
+};
+const KINDS = { table: '엑셀·표', doc: '문서·PDF', hwp: '한글 파일', web: '게시판·웹 글', media: '녹음·영상', none: '자료 없음' };
+const PLACES = { pc: '내 PC', cloud: '클라우드 드라이브', school: '학교 시스템', mail: '메일·메신저' };
+const dataReady = n => n.dataKind === 'none' || !!(n.dataKind && n.dataPlace && n.dataPrivate);
+// 자료 종류와 위치에 따라 준비할 일을 만든다
+function prepOf(n) {
+  if (!n.dataKind || n.dataKind === 'none') return [];
+  const out = [];
+  if (n.dataPlace === 'school') out.push('학교 시스템에서 자료 내려받기');
+  if (n.dataPlace === 'mail') out.push('메일과 메신저에서 파일 모으기');
+  if (n.dataKind === 'table') out.push(n.dataPlace === 'cloud' ? '파일이 스프레드시트 형식인지 확인하기' : '엑셀을 스프레드시트로 옮기기');
+  if (n.dataKind === 'hwp') out.push('한글 파일을 PDF나 워드로 바꾸기');
+  if (n.dataKind === 'web') out.push('글 내용을 한 문서로 모으기');
+  if (n.dataKind === 'media') out.push('녹음이나 영상을 글로 옮기기');
+  if (n.dataKind === 'doc' && n.dataPlace === 'pc') out.push('AI 채팅 창에 올릴 수 있는 파일 크기인지 확인하기');
+  if (n.dataPrivate === 'yes') out.push('학생 이름과 학번 가리기', '학교 규정에서 AI에 넣어도 되는 자료인지 확인하기');
+  return out;
+}
+// 단계별 AI 지시문 초안: 고른 내용을 틀에 채운다
+function promptOf(n) {
+  const g = n.group ? group(n.group) : null;
+  const next = children(n.id).map(nodeName);
+  const lines = [`저는 대학 교수이고, "${state.title || '업무'}" 업무를 하고 있습니다.`, `이번에 부탁할 일: ${nodeName(n.id)}`];
+  if (g && g.type === 'each') lines.push(`${g.unit || '건'}마다 같은 형식으로 결과를 만들어 주세요.`);
+  if (g && g.type === 'until') lines.push('제가 의견을 드리면 고쳐서 다시 보여 주세요.');
+  if (n.dataKind === 'none') lines.push('자료는 따로 드리지 않습니다.');
+  else if (n.dataKind) lines.push(`함께 드리는 자료: ${KINDS[n.dataKind]}`);
+  if (n.dataPrivate === 'yes') lines.push('자료의 학생 이름과 학번은 가렸습니다. 개인을 추측하지 마세요.');
+  if (next.length) lines.push(`결과는 다음 단계에 씁니다: ${next.join(', ')}`);
+  if (n.verify === 'all') lines.push('제가 결과를 모두 읽고 확인합니다. 판단 근거를 함께 적어 주세요.');
+  if (n.verify === 'sample') lines.push('제가 일부만 확인합니다. 판단이 불확실한 건은 따로 표시해 주세요.');
+  if (n.verify === 'none') lines.push('확인 없이 바로 쓰므로 정해진 형식을 꼭 지켜 주세요.');
+  lines.push('요구 사항: [원하는 분량, 말투, 형식을 여기에 적으세요]');
+  return lines.join('\n');
+}
+function prepAll() {
+  const map = new Map();
+  state.nodes.filter(n => n.ai).forEach(n => prepOf(n).forEach(t => {
+    if (!map.has(t)) map.set(t, []);
+    map.get(t).push(nodeName(n.id));
+  }));
+  return [...map.entries()];
+}
+const whoOf = n => (n.ai && n.me ? 'AI + 나' : n.ai ? 'AI' : n.me ? '나' : '미정');
+// 복사, 저장에 쓰는 결과 글
+function resultText() {
+  const L = computeLayout();
+  const lines = [`[${state.title || '업무 흐름'}]`, `다시 하는 주기: ${state.cycle}`, '', '단계'];
+  [...state.nodes].sort((a, b) => L.rank[a.id] - L.rank[b.id]).forEach(n => {
+    const extra = n.ai && n.verify ? `, ${VERIFY[n.verify].name}` : '';
+    lines.push(`${L.rank[n.id] + 1}. ${nodeName(n.id)} (${whoOf(n)}${extra})`);
+  });
+  const prep = prepAll();
+  if (prep.length) {
+    lines.push('', '준비할 일');
+    prep.forEach(([t, who]) => lines.push(`- ${t} (${who.join(', ')})`));
+  }
+  const ai = state.nodes.filter(n => n.ai);
+  if (ai.length) {
+    lines.push('', 'AI 지시문 초안');
+    ai.forEach(n => lines.push('', `■ ${nodeName(n.id)}`, promptOf(n)));
+  }
+  return lines.join('\n');
+}
+function copyText(text, done) {
+  // 파일로 열었을 때는 클립보드 기능이 없을 수 있어 예전 방식으로도 복사한다
+  const old = () => {
+    const t = document.createElement('textarea');
+    t.value = text;
+    document.body.appendChild(t);
+    t.select();
+    document.execCommand('copy');
+    t.remove();
+    done();
+  };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, old);
+  else old();
+}
+
+// ── 2. 상태 ─────────────────────────────────────────
+let state = EMPTY();
+let sel = null;            // { type: 'node'|'group'|'edge', ... }
+let history = [];
+let scale = 1, fitMode = true;
+let view = null;           // 계산된 배치
+let focusNext = null;      // 다시 그린 뒤 입력 칸에 커서를 둘 카드
+let stepNo = 1;            // 지금 보는 화면 번호
+let suppressClick = false;
+
+const $ = id => document.getElementById(id);
+const node = id => state.nodes.find(n => n.id === id);
+const group = id => state.groups.find(g => g.id === id);
+const parents = id => state.edges.filter(e => e.to === id).map(e => e.from);
+const children = id => state.edges.filter(e => e.from === id).map(e => e.to);
+const avg = a => a.reduce((s, v) => s + v, 0) / a.length;
+const newId = prefix => {
+  const used = [...state.nodes, ...state.groups].map(o => Number(o.id.slice(1)));
+  return prefix + (Math.max(0, ...used) + 1);
+};
+// a 에서 b 로 화살표를 따라갈 수 있는지 (순환 확인용)
+const reaches = (a, b) => a === b || children(a).some(c => reaches(c, b));
+const nodeName = id => node(id).text || '(이름 없는 단계)';
+
+// 상태를 바꾸기 전에 되돌리기 기록을 남기고, 바꾼 뒤 다시 그린다
+function change(fn) {
+  history.push(JSON.stringify(state));
+  fn();
+  tidy();
+  render();
+}
+// 지워진 항목이 남기는 빈 묶음·갈림 정리
+function tidy() {
+  state.groups = state.groups.filter(g => state.nodes.some(n => n.group === g.id));
+  state.nodes.forEach(n => { if (children(n.id).length < 2) n.split = false; });
+  state.edges.forEach(e => { if (!node(e.from).split) e.label = ''; });
+}
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+function goStep(no) {
+  stepNo = no;
+  sel = null;
+  document.body.classList.toggle('locked', no >= 2);
+  document.body.classList.toggle('step5', no === 5);
+  $('pal-flow').hidden = no !== 1;
+  $('pal-divide').hidden = no !== 2;
+  $('pal-verify').hidden = no !== 3;
+  $('pal-data').hidden = no !== 4;
+  $('prev').hidden = no === 1;
+  $('next').hidden = no === 5;
+  if (no > 1) $('prev').textContent = `이전: ${STEP_NAMES[no - 2]}`;
+  if (no < 5) $('next').textContent = `다음: ${STEP_NAMES[no]}`;
+  document.querySelectorAll('.steps span').forEach((el, i) => {
+    const on = i + 1 === no;
+    el.classList.toggle('on', on);
+    el.textContent = on ? `${i + 1} ${STEP_NAMES[i]}` : i + 1;
+    if (on) el.setAttribute('aria-current', 'step'); else el.removeAttribute('aria-current');
+    el.title = STEP_NAMES[i];
+  });
+  fitMode = true;
+  render();
+}
+// 일 나누기: 한 단계에 AI와 나를 함께 표시할 수 있다
+function markDo(id, who) {
+  change(() => { node(id)[who] = true; });
+}
+function toggleDo(id, who) {
+  change(() => { node(id)[who] = !node(id)[who]; });
+}
+
+// ── 3. 편집 동작 ────────────────────────────────────
+function addNode(groupId) {
+  const n = { id: newId('n'), text: '', group: groupId || null, split: false };
+  state.nodes.push(n);
+  sel = { type: 'node', id: n.id };
+  focusNext = n.id;
+  return n;
+}
+function addEdge(from, to, label) {
+  if (!state.edges.some(e => e.from === from && e.to === to)) state.edges.push({ from, to, label: label || '' });
+}
+// 자리(slot)에 단계 넣기: 화살표 위, 마지막 카드 뒤, 첫 카드 앞
+function placeInSlot(id, slot) {
+  const n = node(id);
+  if (slot.kind === 'edge') {
+    const e = state.edges.find(x => x.from === slot.from && x.to === slot.to);
+    const a = node(slot.from), b = node(slot.to);
+    n.group = (a.group && a.group === b.group) ? a.group : null;
+    const label = e.label;
+    state.edges = state.edges.filter(x => x !== e);
+    addEdge(slot.from, id, label);
+    addEdge(id, slot.to);
+  } else if (slot.kind === 'after') {
+    n.group = null;
+    addEdge(slot.id, id);
+  } else {
+    n.group = null;
+    addEdge(id, slot.id);
+  }
+}
+// 흐름에서 카드를 빼고, 앞뒤 단계를 이어 준다
+function detach(id) {
+  const ps = parents(id), cs = children(id);
+  state.edges = state.edges.filter(e => e.from !== id && e.to !== id);
+  ps.forEach(p => cs.forEach(c => addEdge(p, c)));
+}
+function removeNode(id) {
+  change(() => {
+    detach(id);
+    state.nodes = state.nodes.filter(n => n.id !== id);
+    sel = null;
+  });
+}
+function addAfter(id) {
+  change(() => {
+    const cs = children(id);
+    const n = addNode(cs.length && cs.every(c => node(c).group && node(c).group === node(id).group) ? node(id).group : null);
+    state.edges.filter(e => e.from === id).forEach(e => { e.from = n.id; e.label = ''; });
+    addEdge(id, n.id);
+    if (node(id).split) { n.split = true; node(id).split = false; }
+  });
+}
+function addParallel(id) {
+  change(() => {
+    const n = addNode(node(id).group);
+    parents(id).forEach(p => addEdge(p, n.id));
+    children(id).forEach(c => addEdge(n.id, c));
+  });
+}
+function makeSplit(id) {
+  change(() => {
+    const cs = children(id);
+    if (cs.length === 0) { const a = addNode(); addEdge(id, a.id); const b = addNode(); addEdge(id, b.id); focusNext = a.id; }
+    if (cs.length === 1) {
+      const n = addNode(node(cs[0]).group);
+      addEdge(id, n.id);
+      children(cs[0]).forEach(c => addEdge(n.id, c));
+    }
+    node(id).split = true;
+  });
+  if (!tut) toast('화살표의 조건 이름표를 눌러 언제 어느 쪽으로 가는지 적어 주세요.');
+}
+function wrapGroup(id, type) {
+  change(() => {
+    const n = node(id);
+    if (n.group) {
+      const g = group(n.group);
+      g.type = type;
+      sel = { type: 'group', id: g.id };
+      return;
+    }
+    const g = type === 'each' ? { id: newId('g'), type, unit: '', check: '' } : { id: newId('g'), type, stop: '' };
+    state.groups.push(g);
+    n.group = g.id;
+    sel = { type: 'group', id: g.id };
+  });
+}
+function growGroup(gid, direction) {
+  change(() => {
+    const members = state.nodes.filter(n => n.group === gid);
+    const next = new Set();
+    members.forEach(m => (direction === 'up' ? parents(m.id) : children(m.id)).forEach(o => {
+      if (!node(o).group) next.add(o);
+    }));
+    if (!next.size) { toast('넓힐 단계가 없습니다.'); return; }
+    next.forEach(o => { node(o).group = gid; });
+  });
+}
+function applyPalette(kind, id) {
+  if (kind.startsWith('do-')) { markDo(id, kind.slice(3)); return; }
+  if (/^(vf|dk|dp)-/.test(kind)) {
+    if (!node(id).ai) { toast('내가 하는 단계입니다. AI에게 시킨 단계에 놓아 주세요.'); return; }
+    const field = { vf: 'verify', dk: 'dataKind', dp: 'dataPlace' }[kind.slice(0, 2)];
+    change(() => { node(id)[field] = kind.slice(3); });
+    return;
+  }
+  if (kind === 'parallel') addParallel(id);
+  if (kind === 'split') makeSplit(id);
+  if (kind === 'each' || kind === 'until') wrapGroup(id, kind);
+}
+
+// ── 4. 자동 배치 ────────────────────────────────────
+function computeLayout() {
+  const ids = state.nodes.map(n => n.id);
+  // 4-1. 행 나누기: 가장 긴 경로 기준
+  const rank = {};
+  const visit = id => {
+    if (rank[id] !== undefined) return rank[id];
+    const ps = parents(id);
+    rank[id] = ps.length ? Math.max(...ps.map(visit)) + 1 : 0;
+    return rank[id];
+  };
+  ids.forEach(visit);
+  const rows = [];
+  ids.forEach(id => { (rows[rank[id]] = rows[rank[id]] || []).push(id); });
+
+  // 줄을 건너뛰는 화살표는 사이 줄마다 통로를 잡아 카드 뒤로 지나가지 않게 한다
+  const lanes = {};   // 통로 id → { group, seq }
+  const routes = {};  // '앞>뒤' → 통로 id 목록
+  const ups = {};     // 각 칸 바로 윗줄에서 이어지는 칸
+  ids.forEach(id => { ups[id] = []; });
+  state.edges.forEach((e, i) => {
+    const sameGroup = node(e.from).group === node(e.to).group ? node(e.from).group : null;
+    let prev = e.from;
+    for (let r = rank[e.from] + 1; r < rank[e.to]; r++) {
+      const lane = `~${e.from}>${e.to}:${r}`;
+      lanes[lane] = { group: sameGroup, seq: ids.length + i };
+      ups[lane] = [prev];
+      rows[r].push(lane);
+      (routes[`${e.from}>${e.to}`] = routes[`${e.from}>${e.to}`] || []).push(lane);
+      prev = lane;
+    }
+    ups[e.to].push(prev);
+  });
+  const groupOf = id => (lanes[id] ? lanes[id].group : node(id).group);
+  const seqOf = id => (lanes[id] ? lanes[id].seq : ids.indexOf(id));
+  const widthOf = id => (lanes[id] ? LANE_W : CARD_W);
+
+  // 4-2. 행 안의 순서·가로 위치: 앞 단계 위치를 따라가되 겹치지 않게 민다
+  const x = {}, order = {};
+  rows.forEach(row => {
+    const key = {};
+    row.forEach(id => {
+      key[id] = ups[id].length ? avg(ups[id].map(p => order[p])) : seqOf(id) * 0.001;
+    });
+    row.forEach(id => {
+      const g = groupOf(id);
+      if (g) key[id] = Math.min(...row.filter(o => groupOf(o) === g).map(o => key[o]));
+    });
+    // 같은 묶음끼리 붙이되, 먼저 만든 카드가 왼쪽에 오게 한다
+    const first = id => {
+      const g = groupOf(id);
+      return g ? Math.min(...row.filter(o => groupOf(o) === g).map(seqOf)) : seqOf(id);
+    };
+    row.sort((a, b) => key[a] - key[b] || first(a) - first(b) || seqOf(a) - seqOf(b));
+    row.forEach((id, i) => { order[id] = i - (row.length - 1) / 2; });
+
+    const want = row.map(id => (ups[id].length ? avg(ups[id].map(p => x[p])) : 0));
+    const pos = [];
+    row.forEach((id, i) => {
+      if (i === 0) { pos.push(want[0]); return; }
+      const left = groupOf(row[i - 1]), right = groupOf(id);
+      let sep = (widthOf(row[i - 1]) + widthOf(id)) / 2 + GAP_X;
+      if (left !== right) sep += (left ? BOX_X : 0) + (right ? BOX_X : 0);
+      pos.push(Math.max(want[i], pos[i - 1] + sep));
+    });
+    const shift = avg(want) - avg(pos);
+    row.forEach((id, i) => { x[id] = pos[i] + shift; });
+  });
+
+  // 4-3. 세로 위치: 묶음 여백과 갈림 이름표 자리를 더한다
+  const groupRanks = {};
+  state.nodes.forEach(n => {
+    if (!n.group) return;
+    const r = rank[n.id];
+    const gr = groupRanks[n.group] = groupRanks[n.group] || { min: r, max: r };
+    gr.min = Math.min(gr.min, r);
+    gr.max = Math.max(gr.max, r);
+  });
+  const rowY = [];
+  let y = 0;
+  rows.forEach((row, r) => {
+    const top = row.some(id => groupOf(id) && groupRanks[groupOf(id)].min === r) ? BOX_TOP : 0;
+    if (r > 0) {
+      const prev = rows[r - 1];
+      const bottom = prev.some(id => groupOf(id) && groupRanks[groupOf(id)].max === r - 1) ? BOX_BOT : 0;
+      const label = row.some(id => !lanes[id] && parents(id).some(p => node(p).split && rank[id] - rank[p] === 1)) ? LABEL_GAP : 0;
+      y += CARD_H + GAP_Y + bottom + label;
+    }
+    y += top;
+    rowY[r] = y;
+  });
+  const yOf = id => rowY[rank[id]];
+
+  // 4-4. 묶음 상자, 상자 안으로 들어온 다른 카드는 오른쪽으로 민다
+  const boxOf = g => {
+    const ms = state.nodes.filter(n => n.group === g.id).map(n => n.id);
+    const inner = Object.keys(lanes).filter(l => lanes[l].group === g.id);
+    return {
+      left: Math.min(...ms.map(m => x[m] - CARD_W / 2), ...inner.map(l => x[l] - LANE_W / 2)) - BOX_X,
+      right: Math.max(...ms.map(m => x[m] + CARD_W / 2), ...inner.map(l => x[l] + LANE_W / 2)) + BOX_X,
+      top: Math.min(...ms.map(yOf)) - BOX_TOP,
+      bottom: Math.max(...ms.map(yOf)) + CARD_H + BOX_BOT,
+    };
+  };
+  state.groups.forEach(g => {
+    const b = boxOf(g);
+    state.nodes.forEach(n => {
+      if (n.group === g.id) return;
+      const top = yOf(n.id), hit = top < b.bottom && top + CARD_H > b.top
+        && x[n.id] + CARD_W / 2 > b.left && x[n.id] - CARD_W / 2 < b.right;
+      if (hit) x[n.id] = b.right + GAP_X + CARD_W / 2;
+    });
+    Object.keys(lanes).forEach(l => {
+      if (lanes[l].group === g.id) return;
+      const top = rowY[Number(l.slice(l.lastIndexOf(':') + 1))];
+      const hit = top < b.bottom && top + CARD_H > b.top && x[l] + LANE_W / 2 > b.left && x[l] - LANE_W / 2 < b.right;
+      if (hit) x[l] = b.right + GAP_X + LANE_W / 2;
+    });
+  });
+  // 밀려난 칸이 같은 줄의 다른 칸과 겹치지 않게 다시 벌린다
+  rows.forEach(row => {
+    const line = [...row].sort((a, b) => x[a] - x[b]);
+    line.forEach((id, i) => {
+      if (!i) return;
+      const min = x[line[i - 1]] + (widthOf(line[i - 1]) + widthOf(id)) / 2 + GAP_X;
+      if (x[id] < min) x[id] = min;
+    });
+  });
+  const boxes = state.groups.map(g => ({ g, ...boxOf(g) }));
+
+  // 4-5. 전체 범위
+  const laneIds = Object.keys(lanes);
+  const lefts = ids.map(id => x[id] - CARD_W / 2).concat(boxes.map(b => b.left), laneIds.map(l => x[l] - LANE_W / 2));
+  const rights = ids.map(id => x[id] + CARD_W / 2).concat(boxes.map(b => b.right), laneIds.map(l => x[l] + LANE_W / 2));
+  const tops = ids.map(yOf).concat(boxes.map(b => b.top));
+  const bottoms = ids.map(id => yOf(id) + CARD_H).concat(boxes.map(b => b.bottom));
+  const minX = Math.min(...lefts), maxX = Math.max(...rights);
+  const minY = Math.min(...tops), maxY = Math.max(...bottoms);
+  // 화살표가 지나갈 통로의 위치
+  const routeOf = {};
+  Object.keys(routes).forEach(k => {
+    routeOf[k] = routes[k].map(l => {
+      const y = rowY[Number(l.slice(l.lastIndexOf(':') + 1))];
+      return { x: x[l], top: y, bottom: y + CARD_H };
+    });
+  });
+  return {
+    rank, x, yOf, boxes, minX, minY, routeOf,
+    w: maxX - minX + MARGIN * 2,
+    h: maxY - minY + MARGIN * 2,
+  };
+}
+
+// ── 5. 화면 그리기 ──────────────────────────────────
+const bezier = (a, b, t) => {
+  const d = Math.max(24, (b.y - a.y) / 2);
+  const c1 = { x: a.x, y: a.y + d }, c2 = { x: b.x, y: b.y - d }, u = 1 - t;
+  return {
+    x: u*u*u*a.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*b.x,
+    y: u*u*u*a.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*b.y,
+  };
+};
+const pathOf = (a, b) => {
+  const d = Math.max(24, (b.y - a.y) / 2);
+  return `M${a.x} ${a.y} C${a.x} ${a.y + d} ${b.x} ${b.y - d} ${b.x} ${b.y}`;
+};
+// 통로를 지나는 화살표: 통로 안은 곧게, 통로 사이는 곡선으로 잇는다
+const lanePath = (a, b, stops) => {
+  const pts = [a, ...stops, b];
+  let d = `M${a.x} ${a.y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    if (i % 2) { d += ` L${pts[i + 1].x} ${pts[i + 1].y}`; continue; }
+    const seg = pathOf(pts[i], pts[i + 1]);
+    d += ' ' + seg.slice(seg.indexOf('C'));
+  }
+  return d;
+};
+function make(tag, cls, parent) {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (parent) parent.appendChild(el);
+  return el;
+}
+
+// 줄 수에 맞춰 위아래 여백을 같게 한다
+function centerText(ta) {
+  ta.style.padding = '0 10px';
+  ta.style.height = '0px';
+  const h = ta.scrollHeight;
+  ta.style.height = '';
+  const pad = Math.max(0, (ta.clientHeight - h) / 2);
+  ta.style.padding = `${pad}px 10px`;
+}
+
+function render() {
+  renderCore();
+  tutCheck();
+  autosave();
+}
+function renderCore() {
+  hideTip();
+  $('title').value = state.title;
+  $('cycle').value = state.cycle;
+  $('undo').disabled = !history.length;
+  const items = $('items'), edgeLayer = $('edge-layer');
+  items.innerHTML = '';
+  edgeLayer.innerHTML = '';
+  $('empty').classList.toggle('show', state.nodes.length === 0);
+  view = { slots: [] };
+
+  if (state.nodes.length === 0) {
+    $('stage').style.width = $('stage').style.height = '0';
+    $('sizer').style.width = $('sizer').style.height = '0';
+    renderPanel();
+    return;
+  }
+
+  const L = computeLayout();
+  const canvas = $('canvas');
+  if (fitMode) {
+    scale = Math.max(MIN_FIT, Math.min(1, (canvas.clientHeight - 8) / L.h, (canvas.clientWidth - 8) / L.w));
+  }
+  $('zoom-val').textContent = Math.round(scale * 100) + '%';
+  const stageW = Math.max(L.w, canvas.clientWidth / scale);
+  const stageH = Math.max(L.h, canvas.clientHeight / scale);
+  const ox = (stageW - L.w) / 2 + MARGIN - L.minX;
+  const oy = MARGIN - L.minY;
+  const stage = $('stage');
+  stage.style.width = stageW + 'px';
+  stage.style.height = stageH + 'px';
+  stage.style.transform = `scale(${scale})`;
+  $('sizer').style.width = stageW * scale + 'px';
+  $('sizer').style.height = stageH * scale + 'px';
+  $('edges').setAttribute('width', stageW);
+  $('edges').setAttribute('height', stageH);
+
+  const cx = id => L.x[id] + ox;
+  const top = id => L.yOf(id) + oy;
+  view.pos = {};
+  state.nodes.forEach(n => { view.pos[n.id] = { x: cx(n.id) - CARD_W / 2, y: top(n.id) }; });
+
+  // 되풀이 묶음
+  L.boxes.forEach(b => {
+    const el = make('div', `group ${b.g.type}`, items);
+    el.dataset.group = b.g.id;
+    el.style.left = b.left + ox + 'px';
+    el.style.top = b.top + oy + 'px';
+    el.style.width = b.right - b.left + 'px';
+    el.style.height = b.bottom - b.top + 'px';
+    el.classList.toggle('sel', sel?.type === 'group' && sel.id === b.g.id);
+    el.addEventListener('click', ev => { ev.stopPropagation(); select({ type: 'group', id: b.g.id }); });
+    const tag = make('button', `tag ${b.g.type}`, items);
+    tag.textContent = b.g.type === 'each' ? `${b.g.unit || '건'}마다 되풀이` : '만족할 때까지 되풀이';
+    tag.style.left = b.left + ox + 10 + 'px';
+    tag.style.top = b.top + oy + 6 + 'px';
+    tag.dataset.tip = '눌러서 되풀이 설정 열기';
+    tag.addEventListener('click', ev => { ev.stopPropagation(); select({ type: 'group', id: b.g.id }); });
+    // 되풀이를 나타내는 되돌아가는 화살표
+    const rx = b.right + ox - 20, y1 = b.bottom + oy - 12, y2 = b.top + oy + 12;
+    const back = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    back.setAttribute('class', `line back ${b.g.type}`);
+    back.setAttribute('d', `M${rx} ${y1} L${rx} ${y2}`);
+    back.setAttribute('marker-end', `url(#arrow-${b.g.type})`);
+    edgeLayer.appendChild(back);
+  });
+
+  // 화살표
+  state.edges.forEach(e => {
+    const a = { x: cx(e.from), y: top(e.from) + CARD_H };
+    const b = { x: cx(e.to), y: top(e.to) };
+    const on = sel?.type === 'edge' && sel.from === e.from && sel.to === e.to;
+    const route = L.routeOf[`${e.from}>${e.to}`];
+    const stops = route ? route.flatMap(l => [{ x: l.x + ox, y: l.top + oy }, { x: l.x + ox, y: l.bottom + oy }]) : null;
+    const edgePath = stops ? lanePath(a, b, stops) : pathOf(a, b);
+    const laneMid = stops ? { x: stops[0].x, y: (stops[0].y + stops[1].y) / 2 } : null;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('class', 'line edge' + (on ? ' sel' : ''));
+    line.dataset.from = e.from;
+    line.dataset.to = e.to;
+    line.setAttribute('d', edgePath);
+    line.setAttribute('marker-end', on ? 'url(#arrow-red)' : 'url(#arrow)');
+    edgeLayer.appendChild(line);
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    hit.setAttribute('class', 'hit');
+    hit.setAttribute('d', edgePath);
+    hit.addEventListener('click', ev => { ev.stopPropagation(); select({ type: 'edge', from: e.from, to: e.to }); });
+    edgeLayer.appendChild(hit);
+
+    const split = node(e.from).split;
+    // 되풀이 묶음으로 들어가는 화살표는 + 가 이름표와 겹치지 않게 앞쪽에 둔다
+    const entersBox = node(e.to).group && node(e.to).group !== node(e.from).group;
+    const pt = stops ? (split ? bezier(a, stops[0], 0.5) : laneMid) : bezier(a, b, split || entersBox ? 0.3 : 0.5);
+    const plus = make('button', 'plus', items);
+    plus.textContent = '+';
+    plus.dataset.tip = '여기에 새 단계 넣기';
+    plus.setAttribute('aria-label', `${nodeName(e.from)}와 ${nodeName(e.to)} 사이에 단계 추가`);
+    plus.style.left = pt.x - 13 + 'px';
+    plus.style.top = pt.y - 13 + 'px';
+    plus.addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (suppressClick) return;
+      change(() => { const n = addNode(); placeInSlot(n.id, { kind: 'edge', from: e.from, to: e.to }); });
+    });
+    view.slots.push({ kind: 'edge', from: e.from, to: e.to, x: pt.x, y: pt.y, el: plus });
+
+    if (split) {
+      const lp = stops ? laneMid : bezier(a, b, 0.72);
+      const lab = make('button', 'edge-label' + (e.label ? '' : ' empty'), items);
+      lab.textContent = e.label || '조건 적기';
+      lab.dataset.tip = '눌러서 언제 이쪽으로 가는지 적기';
+      lab.style.left = lp.x + 'px';
+      lab.style.top = lp.y + 'px';
+      lab.addEventListener('click', ev => { ev.stopPropagation(); select({ type: 'edge', from: e.from, to: e.to }); });
+    }
+  });
+
+  // 단계 카드
+  state.nodes.forEach(n => {
+    const el = make('div', 'node', items);
+    el.dataset.node = n.id;
+    el.style.left = view.pos[n.id].x + 'px';
+    el.style.top = view.pos[n.id].y + 'px';
+    el.classList.toggle('sel', sel?.type === 'node' && sel.id === n.id);
+
+    const head = make('div', 'head', el);
+    make('span', 'num', head).textContent = L.rank[n.id] + 1;
+    if (stepNo === 1) head.dataset.tip = '끌어서 다른 자리로 옮기기';
+    if (n.group) el.classList.add('in-' + group(n.group).type);
+    if (n.split) el.classList.add('is-split');
+    if (stepNo >= 2) {
+      if (n.ai) el.classList.add('do-ai');
+      if (n.me) el.classList.add('do-me');
+      let text = whoOf(n), kind = n.ai && n.me ? 'both' : n.ai ? 'ai' : n.me ? 'me' : 'none';
+      if ((stepNo === 3 || stepNo === 4) && !n.ai) { el.classList.add('off'); kind = 'dim'; }
+      else if (stepNo === 3) { text = n.verify ? VERIFY[n.verify].name : '미정'; kind = n.verify ? 'ai' : 'none'; }
+      else if (stepNo === 4) {
+        const ready = dataReady(n);
+        text = !ready ? '미정' : n.dataKind === 'none' ? KINDS.none : `${KINDS[n.dataKind]} · ${PLACES[n.dataPlace]}`;
+        kind = ready ? 'ai' : 'none';
+      }
+      if (kind === 'none') el.classList.add('pending');
+      make('span', 'part-tag ' + kind, el).textContent = text;
+    }
+    const del = make('button', 'del', el);
+    del.textContent = '×';
+    del.dataset.tip = '이 단계 지우기';
+    del.setAttribute('aria-label', `${nodeName(n.id)} 지우기`);
+    del.addEventListener('click', ev => { ev.stopPropagation(); removeNode(n.id); });
+    del.addEventListener('pointerdown', ev => ev.stopPropagation());
+    head.addEventListener('pointerdown', ev => { if (stepNo === 1) startDrag(ev, 'move', { id: n.id, label: nodeName(n.id) }); });
+
+    const ta = make('textarea', '', el);
+    ta.value = n.text;
+    ta.maxLength = MAX_TEXT;
+    ta.placeholder = '할 일을 적으세요';
+    ta.setAttribute('aria-label', '단계 이름');
+    ta.readOnly = stepNo === 2;
+    ta.addEventListener('focus', () => { ta.dataset.before = JSON.stringify(state); select({ type: 'node', id: n.id }); });
+    ta.addEventListener('input', () => { n.text = ta.value.replace(/\n/g, ' '); centerText(ta); });
+    ta.addEventListener('change', () => { history.push(ta.dataset.before); $('undo').disabled = false; renderPanel(); tutCheck(); });
+    ta.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === 'Escape') { ev.preventDefault(); ta.blur(); } });
+
+    centerText(ta);
+    el.addEventListener('click', ev => { ev.stopPropagation(); select({ type: 'node', id: n.id }); });
+
+    // 마지막 카드 뒤, 첫 카드 앞, 옆에 나란히
+    if (!children(n.id).length) {
+      const after = make('button', 'plus after', el);
+      after.textContent = '+';
+      after.dataset.tip = '다음 단계 추가';
+      after.setAttribute('aria-label', `${nodeName(n.id)} 다음 단계 추가`);
+      after.addEventListener('click', ev => { ev.stopPropagation(); if (!suppressClick) addAfter(n.id); });
+      view.slots.push({ kind: 'after', id: n.id, x: cx(n.id), y: top(n.id) + CARD_H + 27, el: after });
+    }
+    if (!parents(n.id).length) {
+      const before = make('button', 'plus before', el);
+      before.textContent = '+';
+      before.dataset.tip = '앞에 단계 추가';
+      before.setAttribute('aria-label', `${nodeName(n.id)} 앞 단계 추가`);
+      before.addEventListener('click', ev => {
+        ev.stopPropagation();
+        change(() => { const m = addNode(); placeInSlot(m.id, { kind: 'before', id: n.id }); });
+      });
+      view.slots.push({ kind: 'before', id: n.id, x: cx(n.id), y: top(n.id) - 27, el: before });
+    }
+    const right = make('button', 'plus right', el);
+    right.textContent = '+';
+    right.dataset.tip = '옆에 나란히 추가 (동시에 진행)';
+    right.setAttribute('aria-label', `${nodeName(n.id)}와 동시에 진행할 단계 추가`);
+    right.addEventListener('click', ev => { ev.stopPropagation(); addParallel(n.id); });
+
+    const link = make('button', 'link', el);
+    link.dataset.tip = '끌어서 다른 카드로 화살표 잇기';
+    link.setAttribute('aria-label', `${nodeName(n.id)}에서 화살표 연결`);
+    link.addEventListener('pointerdown', ev => startDrag(ev, 'arrow', { id: n.id, label: '화살표 연결' }));
+    link.addEventListener('click', ev => ev.stopPropagation());
+  });
+
+  if (focusNext) {
+    const ta = items.querySelector(`[data-node="${focusNext}"] textarea`);
+    focusNext = null;
+    ta?.focus();
+  }
+  renderPanel();
+}
+
+function select(next) {
+  if (stepNo >= 2 && next && next.type !== 'node') next = null;
+  if (stepNo === 5) next = null;
+  const same = sel && next && sel.type === next.type && sel.id === next.id && sel.from === next.from && sel.to === next.to;
+  sel = next;
+  if (same) return;
+  document.querySelectorAll('.node').forEach(el => el.classList.toggle('sel', sel?.type === 'node' && sel.id === el.dataset.node));
+  document.querySelectorAll('.group').forEach(el => el.classList.toggle('sel', sel?.type === 'group' && sel.id === el.dataset.group));
+  document.querySelectorAll('#edges .edge').forEach(el => {
+    const on = sel?.type === 'edge' && sel.from === el.dataset.from && sel.to === el.dataset.to;
+    el.classList.toggle('sel', on);
+    el.setAttribute('marker-end', on ? 'url(#arrow-red)' : 'url(#arrow)');
+  });
+  renderPanel();
+}
+
+// ── 6. 오른쪽 패널 ──────────────────────────────────
+function renderPanel() {
+  const p = $('panel');
+  p.innerHTML = '';
+  if (stepNo === 5) panelResult(p);
+  else if (stepNo === 4 && sel?.type === 'node' && node(sel.id)) panelDataNode(p, node(sel.id));
+  else if (stepNo === 4) panelDataSummary(p);
+  else if (stepNo === 3 && sel?.type === 'node' && node(sel.id)) panelVerifyNode(p, node(sel.id));
+  else if (stepNo === 3) panelVerifySummary(p);
+  else if (stepNo === 2 && sel?.type === 'node' && node(sel.id)) panelDivideNode(p, node(sel.id));
+  else if (stepNo === 2) panelDivideSummary(p);
+  else if (sel?.type === 'node' && node(sel.id)) panelNode(p, node(sel.id));
+  else if (sel?.type === 'group' && group(sel.id)) panelGroup(p, group(sel.id));
+  else if (sel?.type === 'edge' && state.edges.some(e => e.from === sel.from && e.to === sel.to)) panelEdge(p, sel);
+  else panelSummary(p);
+  tutMark();
+}
+function button(parent, text, fn, cls) {
+  const b = make('button', 'btn ' + (cls || 'wide'), parent);
+  b.textContent = text;
+  b.addEventListener('click', fn);
+  return b;
+}
+// 패널 입력 칸: 글자를 칠 때 상태만 바꾸고, 입력을 마치면 그림을 다시 그린다
+function field(parent, labelText, value, placeholder, onInput) {
+  const id = 'f' + Math.random().toString(36).slice(2);
+  const l = make('label', 'field', parent);
+  l.textContent = labelText;
+  l.htmlFor = id;
+  const i = make('input', '', parent);
+  i.type = 'text';
+  i.id = id;
+  i.value = value || '';
+  i.placeholder = placeholder;
+  let before;
+  i.addEventListener('focus', () => { before = JSON.stringify(state); });
+  i.addEventListener('input', () => onInput(i.value));
+  i.addEventListener('change', () => { history.push(before); render(); });
+}
+
+function panelDivideSummary(p) {
+  make('div', 'kh', p).textContent = '일 나누기';
+  make('p', 'hint', p).textContent = '단계마다 AI에게 시킬 일과 내가 할 일을 나눕니다.';
+  const section = (title, list) => {
+    make('p', 'sub', p).textContent = `${title} ${list.length}`;
+    if (!list.length) return;
+    const box = make('div', 'do-list', p);
+    list.forEach(n => {
+      const b = make('button', 'do-item', box);
+      b.textContent = nodeName(n.id);
+      b.addEventListener('click', () => select({ type: 'node', id: n.id }));
+    });
+  };
+  section('AI에게 시킬 일', state.nodes.filter(n => n.ai));
+  section('내가 할 일', state.nodes.filter(n => n.me));
+  const left = state.nodes.filter(n => !divided(n));
+  if (left.length) {
+    make('p', 'sub', p).textContent = `아직 나누지 않은 단계 ${left.length}`;
+    left.forEach(n => {
+      const b = make('button', 'todo', p);
+      b.textContent = nodeName(n.id);
+      b.addEventListener('click', () => select({ type: 'node', id: n.id }));
+    });
+  }
+  button(p, '가상 상황으로 따라 해 보기', () => tutStartFrom('divide', false));
+}
+function panelDivideNode(p, n) {
+  make('div', 'kh', p).textContent = nodeName(n.id);
+  make('p', 'hint', p).textContent = '이 단계를 나눕니다. 둘 다 골라도 됩니다.';
+  const option = (who, title, desc) => {
+    const b = make('button', 'do-opt', p);
+    b.dataset.do = who;
+    b.setAttribute('aria-pressed', !!n[who]);
+    const ico = make('span', `ico do-${who}`, b);
+    ico.innerHTML = document.querySelector(`.chip[data-kind="do-${who}"] .ico`).innerHTML;
+    const text = make('span', '', b);
+    make('b', '', text).textContent = title;
+    make('small', '', text).textContent = desc;
+    make('span', 'mark', b).textContent = n[who] ? '✓' : '';
+    b.addEventListener('click', () => toggleDo(n.id, who));
+  };
+  option('ai', 'AI에게 시키기', 'AI에게 시키고 싶은 일');
+  option('me', '내가 하기', '내가 해야 하는 일');
+}
+
+// 3번 화면: 확인 방법
+function noAiNote(p) {
+  make('p', 'hint', p).textContent = 'AI에게 시킨 단계가 없습니다. "일 나누기"에서 표시하면 여기에 나옵니다.';
+}
+function selfCard(p, n) {
+  make('div', 'kh', p).textContent = nodeName(n.id);
+  make('p', 'hint', p).textContent = '내가 하는 단계라 여기서 정할 내용이 없습니다.';
+}
+function panelVerifySummary(p) {
+  make('div', 'kh', p).textContent = '확인 기준';
+  make('p', 'hint', p).textContent = 'AI에게 시킨 단계마다 결과를 어떻게 확인할지 고릅니다.';
+  const ai = state.nodes.filter(n => n.ai);
+  if (!ai.length) noAiNote(p);
+  const tb = make('table', 'tb', p);
+  Object.entries(VERIFY).forEach(([k, v]) => {
+    const r = make('tr', '', tb);
+    make('td', '', r).textContent = v.name;
+    make('td', '', r).textContent = ai.filter(n => n.verify === k).length;
+  });
+  const left = ai.filter(n => !n.verify);
+  if (left.length) {
+    make('p', 'sub', p).textContent = `아직 고르지 않은 단계 ${left.length}`;
+    left.forEach(n => {
+      const b = make('button', 'todo', p);
+      b.textContent = nodeName(n.id);
+      b.addEventListener('click', () => select({ type: 'node', id: n.id }));
+    });
+  }
+  button(p, '가상 상황으로 따라 해 보기', () => tutStartFrom('verify', false));
+}
+function panelVerifyNode(p, n) {
+  if (!n.ai) { selfCard(p, n); return; }
+  make('div', 'kh', p).textContent = nodeName(n.id);
+  make('p', 'hint', p).textContent = 'AI 결과를 어떻게 확인할까요?';
+  Object.entries(VERIFY).forEach(([key, v]) => {
+    const b = make('button', 'do-opt', p);
+    b.dataset.do = key;
+    b.setAttribute('aria-pressed', n.verify === key);
+    const ico = make('span', 'ico act', b);
+    ico.innerHTML = document.querySelector(`.chip[data-kind="vf-${key}"] .ico`).innerHTML;
+    const text = make('span', '', b);
+    make('b', '', text).textContent = v.name;
+    make('small', '', text).textContent = v.desc;
+    make('span', 'mark', b).textContent = n.verify === key ? '✓' : '';
+    b.addEventListener('click', () => change(() => { n.verify = key; }));
+  });
+}
+// 4번 화면: 자료 준비
+function panelDataSummary(p) {
+  make('div', 'kh', p).textContent = '자료 준비';
+  make('p', 'hint', p).textContent = 'AI에게 줄 자료를 고르면 준비할 일이 여기에 모입니다.';
+  const ai = state.nodes.filter(n => n.ai);
+  if (!ai.length) noAiNote(p);
+  const prep = prepAll();
+  if (prep.length) {
+    make('p', 'sub', p).textContent = '준비할 일';
+    const ul = make('ul', 'prep-list', p);
+    prep.forEach(([t, who]) => {
+      const li = make('li', '', ul);
+      li.append(t);
+      make('small', '', li).textContent = who.join(', ');
+    });
+  }
+  const left = ai.filter(n => !dataReady(n));
+  if (left.length) {
+    make('p', 'sub', p).textContent = `아직 고르지 않은 단계 ${left.length}`;
+    left.forEach(n => {
+      const b = make('button', 'todo', p);
+      b.textContent = nodeName(n.id);
+      b.addEventListener('click', () => select({ type: 'node', id: n.id }));
+    });
+  }
+  button(p, '가상 상황으로 따라 해 보기', () => tutStartFrom('data', false));
+}
+function panelDataNode(p, n) {
+  if (!n.ai) { selfCard(p, n); return; }
+  make('div', 'kh', p).textContent = nodeName(n.id);
+  make('p', 'hint', p).textContent = 'AI에게 어떤 자료를 주나요?';
+  const row = (title, key, options) => {
+    make('p', 'sub', p).textContent = title;
+    const box = make('div', 'opt-row', p);
+    Object.entries(options).forEach(([k, name]) => {
+      const b = make('button', 'opt-chip', box);
+      b.dataset.field = key;
+      b.dataset.k = k;
+      b.textContent = name;
+      b.setAttribute('aria-pressed', n[key] === k);
+      b.addEventListener('click', () => change(() => { n[key] = k; }));
+    });
+  };
+  row('자료 종류', 'dataKind', KINDS);
+  if (n.dataKind !== 'none') {
+    row('자료 위치', 'dataPlace', PLACES);
+    row('학생 이름, 학번, 성적이 들어가나요?', 'dataPrivate', { yes: '들어갑니다', no: '들어가지 않습니다' });
+  }
+  const prep = prepOf(n);
+  if (prep.length) {
+    make('p', 'sub', p).textContent = '이 단계의 준비할 일';
+    const ul = make('ul', 'prep-list', p);
+    prep.forEach(t => { make('li', '', ul).textContent = t; });
+  }
+}
+// 5번 화면: 결과 저장
+function panelResult(p) {
+  make('div', 'kh', p).textContent = '결과 저장';
+  make('p', 'hint', p).textContent = '지금까지 고른 내용입니다. 지시문은 고른 내용을 틀에 채운 초안이므로, 요구 사항을 적어 AI 채팅 창에 넣으세요.';
+  const acts = make('div', 'result-acts', p);
+  const all = make('button', 'btn primary result-copy', acts);
+  all.textContent = '결과 전체 복사';
+  all.addEventListener('click', () => copyText(resultText(), () => {
+    all.textContent = '복사했습니다';
+    if (tut) { tut.copiedAll = true; tutCheck(); }
+  }));
+  const work = make('button', 'btn', acts);
+  work.textContent = '작업 파일 저장';
+  work.dataset.tip = '다음에 불러와 이어서 고칠 수 있는 파일입니다';
+  work.addEventListener('click', () => $('save').click());
+  const txt = make('button', 'btn', acts);
+  txt.textContent = '읽기용 글 파일';
+  txt.dataset.tip = '읽기용이라 다시 불러올 수 없습니다';
+  txt.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([resultText()], { type: 'text/plain' }));
+    a.download = (state.title || '업무흐름') + '_결과.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  const pr = make('button', 'btn', acts);
+  pr.textContent = '인쇄, PDF 저장';
+  pr.addEventListener('click', () => window.print());
+  make('p', 'hint', acts).textContent = '다음에 이어서 고치려면 "작업 파일 저장"을 누르세요. 글 파일과 PDF는 읽기용이라 다시 불러올 수 없습니다.';
+
+  const tb = make('table', 'tb', p);
+  [['AI에게 시킬 단계', state.nodes.filter(n => n.ai).length], ['내가 할 단계', state.nodes.filter(n => n.me).length], ['아직 나누지 않은 단계', state.nodes.filter(n => !divided(n)).length]]
+    .forEach(([k, v]) => {
+      const r = make('tr', '', tb);
+      make('td', '', r).textContent = k;
+      make('td', '', r).textContent = v;
+    });
+  const prep = prepAll();
+  if (prep.length) {
+    make('p', 'sub', p).textContent = '준비할 일';
+    const ul = make('ul', 'prep-list', p);
+    prep.forEach(([t, who]) => {
+      const li = make('li', '', ul);
+      li.append(t);
+      make('small', '', li).textContent = who.join(', ');
+    });
+  }
+  const ai = state.nodes.filter(n => n.ai);
+  make('p', 'sub', p).textContent = 'AI 지시문 초안';
+  if (!ai.length) noAiNote(p);
+  ai.forEach((n, order) => {
+    const card = make('div', 'prompt-card', p);
+    make('b', '', card).textContent = nodeName(n.id);
+    make('pre', '', card).textContent = promptOf(n);
+    const c = make('button', 'btn prompt-copy', card);
+    c.textContent = '지시문 복사';
+    if (!order) c.dataset.first = '1';
+    c.addEventListener('click', () => copyText(promptOf(n), () => {
+      c.textContent = '복사했습니다';
+      if (tut) { tut.copied = true; tutCheck(); }
+    }));
+  });
+  button(p, '가상 상황으로 따라 해 보기', () => tutStartFrom('result', false));
+}
+
+function panelSummary(p) {
+  if (state.review) {
+    const box = make('div', 'ai-review', p);
+    make('p', 'sub', box).textContent = 'AI 초안을 확인해 주세요';
+    make('p', 'hint', box).textContent = '초안은 AI가 쓴 것입니다. 실제 업무와 다른 곳을 고쳐 주세요.';
+    [['AI가 추측한 내용', state.review.assumptions], ['확인할 질문', state.review.questions]].forEach(([name, list]) => {
+      if (!list.length) return;
+      make('p', 'sub', box).textContent = name;
+      const ul = make('ul', '', box);
+      list.forEach(t => { make('li', '', ul).textContent = t; });
+    });
+    button(box, '다 확인했습니다', () => change(() => { delete state.review; }));
+  }
+  make('div', 'kh', p).textContent = '이 업무의 구조';
+  const steps = state.nodes.length;
+  const parallel = state.nodes.filter(n => children(n.id).length > 1 && !n.split).length;
+  const branches = state.nodes.filter(n => n.split).length;
+  const each = state.groups.filter(g => g.type === 'each').length;
+  const until = state.groups.filter(g => g.type === 'until').length;
+  const tb = make('table', 'tb', p);
+  [['단계', steps], ['동시에 진행', parallel], ['조건에 따라 갈림', branches], ['건마다 되풀이', each], ['만족할 때까지 되풀이', until], ['다시 하는 주기', state.cycle]]
+    .forEach(([k, v]) => {
+      const r = make('tr', '', tb);
+      make('td', '', r).textContent = k;
+      make('td', '', r).textContent = v;
+    });
+
+  const todos = [];
+  state.groups.forEach(g => {
+    const names = state.nodes.filter(n => n.group === g.id).map(n => n.text).filter(Boolean)[0] || '되풀이 묶음';
+    if (g.type === 'each' && !g.check) todos.push({ text: `${names}: 몇 건을 표본으로 확인할까요?`, to: { type: 'group', id: g.id } });
+    if (g.type === 'until' && !g.stop) todos.push({ text: `${names}: 언제 멈출까요?`, to: { type: 'group', id: g.id } });
+  });
+  state.edges.forEach(e => {
+    if (node(e.from).split && !e.label) todos.push({ text: `${nodeName(e.to)}: 어떤 경우에 이쪽으로 가나요?`, to: { type: 'edge', from: e.from, to: e.to } });
+  });
+  state.nodes.forEach(n => { if (!n.text) todos.push({ text: '이름을 적지 않은 단계가 있습니다.', to: { type: 'node', id: n.id } }); });
+  if (todos.length) {
+    make('p', 'sub', p).textContent = '정해야 할 것';
+    todos.forEach(t => {
+      const b = make('button', 'todo', p);
+      b.textContent = t.text;
+      b.addEventListener('click', () => select(t.to));
+    });
+  }
+  make('p', 'note', p).textContent = '입력한 내용은 이 브라우저 안에만 있고 서버로 보내지 않습니다. 학생 이름이나 성적은 적지 마세요.';
+}
+
+function panelNode(p, n) {
+  make('div', 'kh', p).textContent = '단계 설정';
+  make('p', 'hint', p).textContent = n.text || '카드에 할 일을 적어 주세요.';
+
+  make('p', 'sub', p).textContent = '앞에 끝나야 하는 단계';
+  const others = state.nodes.filter(o => o.id !== n.id && !reaches(n.id, o.id));
+  if (!others.length) make('p', 'hint', p).textContent = '고를 수 있는 단계가 없습니다.';
+  const ul = make('ul', '', p);
+  others.forEach(o => {
+    const li = make('li', '', ul);
+    const l = make('label', '', li);
+    const c = make('input', '', l);
+    c.type = 'checkbox';
+    c.checked = parents(n.id).includes(o.id);
+    c.addEventListener('change', () => change(() => {
+      if (c.checked) addEdge(o.id, n.id);
+      else state.edges = state.edges.filter(e => !(e.from === o.id && e.to === n.id));
+    }));
+    make('span', '', l).textContent = o.text || '(이름 없는 단계)';
+  });
+
+  make('p', 'sub', p).textContent = '흐름 구분';
+  button(p, '옆에 나란히 추가 (동시에 진행)', () => addParallel(n.id));
+  if (children(n.id).length > 1) {
+    const ul2 = make('ul', '', p);
+    [['모두 진행', false], ['조건에 따라 한쪽만', true]].forEach(([t, v]) => {
+      const l = make('label', '', make('li', '', ul2));
+      const r = make('input', '', l);
+      r.type = 'radio';
+      r.name = 'mode';
+      r.checked = n.split === v;
+      r.addEventListener('change', () => change(() => { n.split = v; }));
+      make('span', '', l).textContent = '다음 단계: ' + t;
+    });
+  } else {
+    button(p, '조건에 따라 갈림 만들기', () => makeSplit(n.id));
+  }
+  if (n.group) {
+    button(p, '되풀이 묶음 설정 보기', () => select({ type: 'group', id: n.group }));
+    button(p, '되풀이 묶음에서 빼기', () => change(() => { n.group = null; }));
+  } else {
+    button(p, '건마다 되풀이로 묶기', () => wrapGroup(n.id, 'each'));
+    button(p, '만족할 때까지 되풀이로 묶기', () => wrapGroup(n.id, 'until'));
+  }
+  make('p', 'sub', p).textContent = '카드';
+  button(p, '다음 단계 추가', () => addAfter(n.id));
+  button(p, '이 단계 지우기', () => removeNode(n.id), 'wide danger');
+}
+
+function panelGroup(p, g) {
+  make('div', 'kh', p).textContent = g.type === 'each' ? '건마다 되풀이' : '만족할 때까지 되풀이';
+  if (g.type === 'each') {
+    make('p', 'hint', p).textContent = '같은 일을 건별로 합니다. AI에게 맡기면 일부를 표본으로 확인해야 합니다.';
+    field(p, '무엇마다 되풀이하나요?', g.unit, '예: 답안, 학생, 문서', v => { g.unit = v; });
+    field(p, '몇 건을 표본으로 확인할까요?', g.check, '예: 전체의 10%', v => { g.check = v; });
+  } else {
+    make('p', 'hint', p).textContent = '결과를 보고 고치기를 되풀이합니다. 멈추는 기준을 사람이 정해야 합니다.';
+    field(p, '언제 멈출까요?', g.stop, '예: 학생이 이해할 수준이 되면', v => { g.stop = v; });
+  }
+  make('p', 'sub', p).textContent = '묶은 단계';
+  const ul = make('ul', '', p);
+  state.nodes.filter(n => n.group === g.id).forEach(n => { make('li', '', ul).textContent = n.text || '(이름 없는 단계)'; });
+  const row = make('div', 'row', p);
+  button(row, '앞 단계까지 넓히기', () => growGroup(g.id, 'up'), '');
+  button(row, '뒤 단계까지 넓히기', () => growGroup(g.id, 'down'), '');
+  button(p, g.type === 'each' ? '만족할 때까지 되풀이로 바꾸기' : '건마다 되풀이로 바꾸기', () => change(() => {
+    g.type = g.type === 'each' ? 'until' : 'each';
+  }));
+  button(p, '묶음 풀기', () => change(() => {
+    state.nodes.forEach(n => { if (n.group === g.id) n.group = null; });
+    sel = null;
+  }), 'wide danger');
+}
+
+function panelEdge(p, s) {
+  const e = state.edges.find(x => x.from === s.from && x.to === s.to);
+  make('div', 'kh', p).textContent = '화살표 설정';
+  make('p', 'hint', p).textContent = `${nodeName(e.from)} 단계가 끝나야 ${nodeName(e.to)} 단계를 시작합니다.`;
+  if (node(e.from).split) {
+    field(p, '어떤 경우에 이쪽으로 가나요?', e.label, '예: 애매한 답안', v => { e.label = v; });
+  }
+  button(p, '이 화살표 지우기', () => change(() => {
+    state.edges = state.edges.filter(x => x !== e);
+    sel = null;
+  }), 'wide danger');
+}
+
+// ── 7. 끌어다 놓기 ──────────────────────────────────
+let drag = null;
+
+function stagePoint(ev) {
+  const r = $('stage').getBoundingClientRect();
+  return { x: (ev.clientX - r.left) / scale, y: (ev.clientY - r.top) / scale };
+}
+function startDrag(ev, kind, data) {
+  if (ev.button) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  // 입력 칸의 커서를 빼서 Delete 키가 글자가 아닌 카드에 적용되게 한다
+  if (['TEXTAREA', 'INPUT'].includes(document.activeElement.tagName)) document.activeElement.blur();
+  drag = { kind, data, sx: ev.clientX, sy: ev.clientY, on: false, target: null };
+  window.addEventListener('pointermove', onDragMove);
+  window.addEventListener('pointerup', onDragEnd);
+  window.addEventListener('pointercancel', onDragCancel);
+}
+function beginVisual() {
+  drag.on = true;
+  document.body.classList.add('dragging');
+  const g = $('ghost');
+  g.textContent = drag.data.label;
+  g.style.display = drag.kind === 'arrow' ? 'none' : 'block';
+  if (drag.kind === 'new' || drag.kind === 'move') $('stage').classList.add('dragging-slot');
+  if (drag.kind === 'move') document.querySelector(`[data-node="${drag.data.id}"]`)?.classList.add('ghosted');
+}
+function clearHot() {
+  document.querySelectorAll('.slot-hot').forEach(el => el.classList.remove('slot-hot'));
+  document.querySelectorAll('.node.target, .group.target').forEach(el => el.classList.remove('target'));
+  $('empty').classList.remove('hot');
+}
+function usableSlots() {
+  if (drag.kind !== 'move') return view.slots;
+  const id = drag.data.id;
+  return view.slots.filter(s => s.from !== id && s.to !== id && s.id !== id);
+}
+function onDragMove(ev) {
+  if (!drag) return;
+  if (!drag.on) {
+    if (Math.hypot(ev.clientX - drag.sx, ev.clientY - drag.sy) < 5) return;
+    beginVisual();
+  }
+  const g = $('ghost');
+  g.style.left = ev.clientX + 12 + 'px';
+  g.style.top = ev.clientY + 12 + 'px';
+  clearHot();
+  drag.target = null;
+
+  const canvasRect = $('canvas').getBoundingClientRect();
+  const inside = ev.clientX >= canvasRect.left && ev.clientX <= canvasRect.right && ev.clientY >= canvasRect.top && ev.clientY <= canvasRect.bottom;
+  if (!inside) { if (drag.kind === 'arrow') $('tmp').style.display = 'none'; return; }
+
+  if (state.nodes.length === 0) {
+    if (drag.kind === 'new') { drag.target = { first: true }; $('empty').classList.add('hot'); }
+    return;
+  }
+  const pt = stagePoint(ev);
+  if (drag.kind === 'new' || drag.kind === 'move') {
+    // 가장 가까운 + 자리
+    let best = null, bestD = 90;
+    usableSlots().forEach(s => {
+      const d = Math.hypot(s.x - pt.x, s.y - pt.y);
+      if (d < bestD) { best = s; bestD = d; }
+    });
+    if (best) { drag.target = { slot: best }; best.el.classList.add('slot-hot'); }
+    return;
+  }
+  // 카드 위에 놓는 경우
+  const over = state.nodes.find(n => {
+    const p = view.pos[n.id];
+    return pt.x > p.x - 8 && pt.x < p.x + CARD_W + 8 && pt.y > p.y - 8 && pt.y < p.y + CARD_H + 8;
+  });
+  if (drag.kind === 'arrow') {
+    const from = view.pos[drag.data.id];
+    const a = { x: from.x + CARD_W - 24, y: from.y + CARD_H };
+    const tmp = $('tmp');
+    tmp.style.display = 'block';
+    tmp.setAttribute('d', pathOf(a, over ? { x: view.pos[over.id].x + CARD_W / 2, y: view.pos[over.id].y } : pt));
+    if (over && over.id !== drag.data.id) drag.target = { node: over.id };
+  } else if (over) {
+    drag.target = { node: over.id };
+  }
+  if (drag.target?.node) document.querySelector(`[data-node="${drag.target.node}"]`).classList.add('target');
+}
+function endVisual() {
+  window.removeEventListener('pointermove', onDragMove);
+  window.removeEventListener('pointerup', onDragEnd);
+  window.removeEventListener('pointercancel', onDragCancel);
+  document.body.classList.remove('dragging');
+  $('stage').classList.remove('dragging-slot');
+  $('ghost').style.display = 'none';
+  $('tmp').style.display = 'none';
+  document.querySelectorAll('.ghosted').forEach(el => el.classList.remove('ghosted'));
+  clearHot();
+}
+function onDragCancel() { endVisual(); drag = null; }
+function onDragEnd() {
+  const d = drag;
+  endVisual();
+  drag = null;
+  if (!d || !d.on) return;
+  suppressClick = true;
+  setTimeout(() => { suppressClick = false; }, 0);
+  if (!d.target) return;
+  const t = d.target;
+
+  if (d.kind === 'new') {
+    change(() => {
+      const n = addNode();
+      if (t.slot) placeInSlot(n.id, slotKey(t.slot));
+    });
+  } else if (d.kind === 'move') {
+    change(() => {
+      detach(d.data.id);
+      placeInSlot(d.data.id, slotKey(t.slot));
+      sel = { type: 'node', id: d.data.id };
+    });
+  } else if (d.kind === 'arrow') {
+    if (reaches(t.node, d.data.id)) {
+      toast('뒤 단계에서 앞 단계로 돌아가는 흐름은 되풀이 묶음으로 표시해 주세요.');
+    } else if (children(d.data.id).includes(t.node)) {
+      toast('이미 연결되어 있습니다.');
+    } else {
+      change(() => addEdge(d.data.id, t.node));
+    }
+  } else {
+    applyPalette(d.kind, t.node);
+  }
+}
+const slotKey = s => (s.kind === 'edge' ? { kind: 'edge', from: s.from, to: s.to } : { kind: s.kind, id: s.id });
+
+// 왼쪽 팔레트: 끌거나 누르기
+document.querySelectorAll('.chip').forEach(chip => {
+  const kind = chip.dataset.kind;
+  const label = chip.querySelector('b').textContent;
+  chip.addEventListener('pointerdown', ev => startDrag(ev, kind, { label }));
+  chip.addEventListener('click', () => {
+    if (suppressClick) return;
+    const picked = sel?.type === 'node' ? sel.id : null;
+    if (kind === 'new') {
+      if (picked) { addAfter(picked); return; }
+      const leaves = state.nodes.filter(n => !children(n.id).length);
+      if (leaves.length) addAfter(leaves[leaves.length - 1].id);
+      else change(() => addNode());
+      return;
+    }
+    if (!picked) { toast('먼저 단계 카드를 눌러 선택해 주세요.'); return; }
+    applyPalette(kind, picked);
+  });
+});
+
+// ── 8. 상단 버튼·입력 ───────────────────────────────
+$('title').addEventListener('input', ev => { state.title = ev.target.value; });
+$('title').addEventListener('change', tutCheck);
+$('title').addEventListener('keydown', ev => { if (ev.key === 'Enter') ev.target.blur(); });
+$('cycle').addEventListener('change', ev => change(() => { state.cycle = ev.target.value; }));
+$('undo').addEventListener('click', undo);
+$('reset').addEventListener('click', () => {
+  tutEnd();
+  change(() => { state = EMPTY(); sel = null; fitMode = true; });
+  goStep(1);
+  toast('비웠습니다. 되돌리기로 복구할 수 있습니다.');
+});
+function showSample() {
+  tutEnd();
+  change(() => { state = JSON.parse(JSON.stringify(EXAMPLE)); sel = null; fitMode = true; });
+}
+$('sample').addEventListener('click', showSample);
+$('first').addEventListener('click', () => change(() => addNode()));
+$('save').addEventListener('click', () => {
+  // 불러올 때 같은 화면에서 이어 가도록 화면 번호도 남긴다
+  const blob = new Blob([JSON.stringify({ ...state, screen: stepNo }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (state.title || '업무흐름') + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+$('load').addEventListener('click', () => $('file').click());
+// 이 도구에서 저장한 파일인지 확인한다. 아니면 null 을 돌려준다
+function readSaved(text) {
+  let raw;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!raw || !Array.isArray(raw.nodes) || !Array.isArray(raw.edges) || !Array.isArray(raw.groups)) return null;
+  const ids = new Set(raw.nodes.map(n => n && n.id));
+  const ok = raw.nodes.every(n => n && typeof n.id === 'string' && typeof n.text === 'string')
+    && raw.edges.every(e => e && ids.has(e.from) && ids.has(e.to))
+    && raw.nodes.every(n => !n.group || raw.groups.some(g => g && g.id === n.group));
+  if (!ok) return null;
+  if (typeof raw.title !== 'string') raw.title = '';
+  if (typeof raw.cycle !== 'string') raw.cycle = '한 번만';
+  raw.edges.forEach(e => { if (typeof e.label !== 'string') e.label = ''; });
+  return raw;
+}
+$('file').addEventListener('change', async ev => {
+  const f = ev.target.files[0];
+  ev.target.value = '';
+  if (!f) return;
+  const raw = readSaved(await f.text());
+  if (!raw) {
+    toast(/\.txt$/i.test(f.name)
+      ? '결과 글 파일은 읽기용이라 불러올 수 없습니다. "작업 파일 저장"으로 만든 .json 파일을 골라 주세요.'
+      : '이 도구의 작업 파일이 아닙니다. "작업 파일 저장"으로 만든 .json 파일을 골라 주세요.');
+    return;
+  }
+  const screen = raw.screen;
+  delete raw.screen;
+  tutEnd();
+  change(() => { state = raw; sel = null; fitMode = true; });
+  // 저장할 때 보던 화면에서 이어 간다. 화면 번호가 없는 예전 파일은 1번부터
+  goStep(state.nodes.length && [1, 2, 3, 4, 5].includes(screen) ? screen : 1);
+  toast('작업 파일을 불러왔습니다.');
+});
+function undo() {
+  if (!history.length) return;
+  if (tut && history.length <= tut.base) tutEnd();
+  state = JSON.parse(history.pop());
+  sel = null;
+  render();
+}
+$('canvas').addEventListener('click', ev => {
+  if (ev.target === $('canvas') || ev.target === $('stage') || ev.target === $('sizer') || ev.target === $('edges') || ev.target === $('items')) select(null);
+});
+window.addEventListener('keydown', ev => {
+  if (!$('welcome').hidden || !$('intro').hidden || !$('aidraft').hidden) return;
+  const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+  if ((ev.ctrlKey || ev.metaKey) && ev.key === 'z' && !typing) { ev.preventDefault(); undo(); }
+  if (typing) return;
+  if ((ev.key === 'Delete' || ev.key === 'Backspace') && sel?.type === 'node' && stepNo === 1) { ev.preventDefault(); removeNode(sel.id); }
+  if (ev.key === 'Escape') select(null);
+});
+$('zoom-in').addEventListener('click', () => { fitMode = false; scale = Math.min(1.5, scale + 0.1); render(); });
+$('zoom-out').addEventListener('click', () => { fitMode = false; scale = Math.max(0.5, scale - 0.1); render(); });
+$('zoom-fit').addEventListener('click', () => { fitMode = true; render(); });
+window.addEventListener('resize', render);
+
+$('next').addEventListener('click', () => {
+  if (stepNo === 1 && !state.nodes.length) { toast('먼저 단계를 하나 이상 적어 주세요.'); return; }
+  tutEnd();
+  goStep(stepNo + 1);
+});
+$('prev').addEventListener('click', () => { tutEnd(); goStep(stepNo - 1); });
+
+window.addEventListener('beforeprint', () => {
+  $('print-title').textContent = `${state.title || '업무 흐름'} (${state.cycle})`;
+  $('sizer').style.zoom = Math.min(1, 680 / $('sizer').offsetWidth);
+});
+window.addEventListener('afterprint', () => { $('sizer').style.zoom = ''; });
+
+// ── 8-1. 버튼 설명: 마우스를 올리면 버튼 위에 보여 준다 ──
+const CHIP_TIPS = {
+  new: '+ 자리로 끌어다 놓으면 단계가 들어갑니다. 누르면 뒤에 붙습니다.',
+  parallel: '단계 카드 위에 놓으면 옆에 동시에 할 단계가 생깁니다.',
+  split: '단계 카드 위에 놓으면 경우에 따라 두 갈래로 나뉩니다.',
+  each: '단계 카드 위에 놓으면 건마다 되풀이하는 묶음이 됩니다.',
+  until: '단계 카드 위에 놓으면 만족할 때까지 되풀이하는 묶음이 됩니다.',
+};
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.dataset.tip = CHIP_TIPS[chip.dataset.kind] || '단계 카드 위에 끌어다 놓습니다.';
+});
+let tipFor = null, tipTimer = null;
+function hideTip() {
+  clearTimeout(tipTimer);
+  tipFor = null;
+  $('tip').classList.remove('show');
+}
+function showTip(el) {
+  const t = $('tip');
+  t.textContent = el.dataset.tip;
+  t.classList.add('show');
+  const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight, M = 8;
+  const x = Math.min(Math.max(r.left + r.width / 2 - w / 2, M), window.innerWidth - w - M);
+  const above = r.top - h - 8 >= M;
+  t.style.left = `${x}px`;
+  t.style.top = `${above ? r.top - h - 8 : r.bottom + 8}px`;
+  t.classList.toggle('below', !above);
+  t.style.setProperty('--arrow', `${r.left + r.width / 2 - x}px`);
+}
+document.addEventListener('pointerover', ev => {
+  const el = ev.target.closest?.('[data-tip]') || null;
+  if (el === tipFor) return;
+  hideTip();
+  if (!el || drag || ev.pointerType === 'touch') return;
+  tipFor = el;
+  tipTimer = setTimeout(() => showTip(el), 150);
+});
+document.addEventListener('pointerdown', hideTip, true);
+window.addEventListener('scroll', hideTip, true);
+document.addEventListener('focusin', ev => {
+  if (ev.target.matches?.('[data-tip]:focus-visible')) { tipFor = ev.target; showTip(ev.target); }
+});
+document.addEventListener('focusout', hideTip);
+
+// ── 9. 시작 안내 팝업 ───────────────────────────────
+function openWelcome() {
+  $('welcome').hidden = false;
+  $('welcome-tutorial').focus();
+}
+function closeWelcome() {
+  $('welcome').hidden = true;
+}
+$('help').addEventListener('click', openWelcome);
+$('welcome-start').addEventListener('click', () => { closeWelcome(); tutEnd(); $('title').focus(); });
+$('welcome-sample').addEventListener('click', () => { closeWelcome(); showSample(); });
+$('welcome-tutorial').addEventListener('click', () => {
+  closeWelcome();
+  $('intro').hidden = false;
+  $('intro-start').focus();
+});
+$('intro-start').addEventListener('click', () => { $('intro').hidden = true; tutStart(); });
+$('intro-back').addEventListener('click', () => { $('intro').hidden = true; openWelcome(); });
+['welcome', 'intro', 'aidraft'].forEach(id => {
+  $(id).addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') { $(id).hidden = true; return; }
+    if (ev.key !== 'Tab') return;
+    // 팝업 안에서만 키보드 이동
+    const items = [...$(id).querySelectorAll('button, textarea')];
+    const first = items[0], last = items[items.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  });
+});
+
+// ── 9-1. AI에게 초안 받기: 지시문을 주고 결과를 붙여 넣는다 ──
+const AI_PROMPT = `당신은 대학 교수가 자기 업무를 흐름도로 정리하도록 돕습니다. 아래 순서로 진행하세요.
+
+1. 먼저 어떤 업무를 정리하려는지 저에게 물어보세요.
+2. 제 답을 읽고, 흐름도를 그리는 데 꼭 필요하지만 빠진 내용을 3~5개 한꺼번에 물어보세요. 쉬운 말로, 한 질문에 한 가지만 묻습니다. 물을 내용은 얼마나 자주 하는지, 일의 순서, 동시에 할 수 있는 일, 건마다 되풀이하는 일, 만족할 때까지 되풀이하는 일, 경우에 따라 갈리는 일, 함께 일하는 사람입니다. AI 활용 조언은 하지 말고, 학생 이름 같은 개인정보는 묻지 마세요.
+3. 제가 답하면 아래 규칙대로 초안을 만들어 JSON 코드 블록 하나로만 답하세요. 다른 설명은 쓰지 마세요.
+
+규칙
+- 들은 내용으로만 단계를 만듭니다. 듣지 않은 단계를 지어내지 않고, 추측한 내용은 assumptions 에 적습니다.
+- text 는 24자 이내의 짧은 말로 쓰고 "~하기"로 끝냅니다.
+- edges 는 앞 단계가 끝나야 뒤 단계를 시작한다는 뜻입니다. 뒤로 돌아가는 화살표는 만들지 않습니다.
+- 동시에 할 수 있는 일은 같은 앞 단계에서 갈라져 같은 뒤 단계로 모입니다. split 은 false 입니다.
+- 경우에 따라 한쪽으로만 가는 일은 갈라지는 단계의 split 을 true 로 하고, 거기서 나가는 화살표마다 label 에 조건을 적습니다. 나가는 화살표는 2개 이상입니다. 다른 화살표의 label 은 비웁니다.
+- 건마다 같은 일을 되풀이하면 type 이 "each" 인 groups 를 만들고 그 단계들의 group 에 id 를 적습니다. unit 에는 "답안"처럼 무엇마다인지 이름만 적습니다.
+- 만족할 때까지 되풀이하면 type 이 "until" 인 groups 를 만듭니다. 되돌아가는 화살표 대신 이 묶음을 씁니다.
+- check(표본 수)와 stop(멈출 기준)은 제가 직접 말한 경우에만 적고, 아니면 비웁니다.
+- AI에게 무엇을 시킬지는 정하지 않습니다.
+- cycle 은 "한 번만", "매주", "매월", "매 학기", "매년", "필요할 때" 중 하나입니다.
+- questions 에는 제가 초안을 검토할 때 확인할 질문을 2~3개 적습니다.
+- assumptions 와 questions 에는 n1, g1 같은 번호를 쓰지 않고 단계 이름으로 적습니다.
+
+형식
+{
+  "title": "업무 제목",
+  "cycle": "매 학기",
+  "nodes": [{ "id": "n1", "text": "답안 내려받기", "group": null, "split": false }],
+  "edges": [{ "from": "n1", "to": "n2", "label": "" }],
+  "groups": [{ "id": "g1", "type": "each", "unit": "답안", "check": "", "stop": "" }],
+  "assumptions": ["추측한 내용"],
+  "questions": ["확인할 질문"]
+}`;
+const AI_RETRY = 'AI에게 "형식에 맞는 JSON 코드 블록 하나로 다시 써 주세요"라고 요청한 뒤 다시 붙여 넣어 주세요.';
+
+// 붙여 넣은 글을 흐름도로 바꾼다. 문제가 있으면 { error } 를 돌려준다
+function parseDraft(text) {
+  const from = text.indexOf('{'), to = text.lastIndexOf('}');
+  if (from < 0 || to < from) return { error: `붙여 넣은 글에서 흐름도를 찾지 못했습니다. ${AI_RETRY}` };
+  let raw;
+  try {
+    raw = JSON.parse(text.slice(from, to + 1));
+  } catch {
+    return { error: `흐름도 형식을 읽지 못했습니다. AI의 답이 중간에 잘리지 않았는지 확인해 주세요. ${AI_RETRY}` };
+  }
+  const list = v => (Array.isArray(v) ? v : []);
+  const nodes = list(raw.nodes), edges = list(raw.edges), groups = list(raw.groups);
+  if (!nodes.length) return { error: `단계가 하나도 없습니다. ${AI_RETRY}` };
+  // 앱의 id 규칙에 맞게 번호를 새로 매긴다
+  const nodeIds = {}, groupIds = {};
+  nodes.forEach((n, i) => { nodeIds[n.id] = `n${i + 1}`; });
+  if (Object.keys(nodeIds).length !== nodes.length) return { error: `같은 번호의 단계가 있습니다. ${AI_RETRY}` };
+  groups.forEach((g, i) => { groupIds[g.id] = `g${i + 1}`; });
+  if (groups.some(g => g.type !== 'each' && g.type !== 'until')) return { error: `되풀이 묶음의 종류를 알 수 없습니다. ${AI_RETRY}` };
+  if (edges.some(e => !nodeIds[e.from] || !nodeIds[e.to])) return { error: `없는 단계로 이어지는 화살표가 있습니다. ${AI_RETRY}` };
+  const seen = new Set();
+  const draft = {
+    title: String(raw.title || ''),
+    cycle: ['한 번만', '매주', '매월', '매 학기', '매년', '필요할 때'].includes(raw.cycle) ? raw.cycle : '한 번만',
+    nodes: nodes.map((n, i) => ({ id: `n${i + 1}`, text: String(n.text || '').trim(), group: groupIds[n.group] || null, split: !!n.split })),
+    edges: edges.filter(e => e.from !== e.to).map(e => ({ from: nodeIds[e.from], to: nodeIds[e.to], label: String(e.label || '') }))
+      .filter(e => { const k = `${e.from}>${e.to}`; if (seen.has(k)) return false; seen.add(k); return true; }),
+    groups: groups.map((g, i) => (g.type === 'each'
+      ? { id: `g${i + 1}`, type: 'each', unit: String(g.unit || '').replace(/\s*마다$/, ''), check: String(g.check || '') }
+      : { id: `g${i + 1}`, type: 'until', stop: String(g.stop || '') })),
+    // 교수님에게 보이는 글에는 내부 번호를 남기지 않는다
+    review: {
+      assumptions: list(raw.assumptions).map(t => String(t).replace(/\s*\([ng]\d+\)/g, '')),
+      questions: list(raw.questions).map(t => String(t).replace(/\s*\([ng]\d+\)/g, '')),
+    },
+  };
+  // 되돌아가는 화살표가 있으면 흐름도로 그릴 수 없다
+  const kids = id => draft.edges.filter(e => e.from === id).map(e => e.to);
+  const mark = {};
+  const looped = id => {
+    if (mark[id] === 1) return true;
+    if (mark[id] === 2) return false;
+    mark[id] = 1;
+    const hit = kids(id).some(looped);
+    mark[id] = 2;
+    return hit;
+  };
+  if (draft.nodes.some(n => looped(n.id))) {
+    return { error: 'AI의 초안에 뒤로 돌아가는 화살표가 있습니다. AI에게 "뒤로 돌아가는 화살표를 빼고 되풀이 묶음으로 다시 써 주세요"라고 요청한 뒤 다시 붙여 넣어 주세요.' };
+  }
+  return { draft };
+}
+function openAiDraft() {
+  closeWelcome();
+  $('ai-prompt').value = AI_PROMPT;
+  $('ai-copy').textContent = '지시문 복사';
+  $('ai-result').value = '';
+  $('ai-error').hidden = true;
+  $('aidraft').hidden = false;
+  $('ai-copy').focus();
+}
+$('welcome-ai').addEventListener('click', openAiDraft);
+$('ai-back').addEventListener('click', () => { $('aidraft').hidden = true; openWelcome(); });
+$('ai-copy').addEventListener('click', () => copyText(AI_PROMPT, () => { $('ai-copy').textContent = '복사했습니다'; }));
+$('ai-load').addEventListener('click', () => {
+  const r = parseDraft($('ai-result').value);
+  $('ai-error').hidden = !r.error;
+  if (r.error) { $('ai-error').textContent = r.error; return; }
+  tutEnd();
+  change(() => { state = r.draft; sel = null; fitMode = true; });
+  goStep(1);
+  $('aidraft').hidden = true;
+});
+
+// ── 10. 튜토리얼: 화면별 단계 (지금은 1번 화면만) ───
+const N = i => state.nodes[i];
+const named = i => N(i) && N(i).text.trim();
+const card = i => (N(i) ? `[data-node="${N(i).id}"]` : null);
+const cardText = i => card(i);   // 이름을 적을 카드는 카드 전체를 표시한다
+const plusAfter = i => (N(i) ? `${card(i)} .plus.after` : null);
+const chipOf = kind => `.chip[data-kind="${kind}"]`;
+const groupType = i => (N(i) && N(i).group ? group(N(i).group).type : null);
+const setText = (i, text) => { N(i).text = text; };
+// 부모 카드 뒤에 새 카드를 붙이고 이름을 적는다 ('대신 해 주기'용)
+function addNamed(parentIndex, text) {
+  change(() => {
+    const n = addNode();
+    if (parentIndex !== null) addEdge(N(parentIndex).id, n.id);
+    n.text = text;
+    focusNext = null;
+  });
+}
+
+// 1번 튜토리얼을 마친 흐름. 2번 화면 튜토리얼만 따로 할 때 쓴다
+const SCENARIO = {
+  title: '토론 게시판 피드백',
+  cycle: '매주',
+  nodes: [
+    { id: 'n1', text: '게시판 글 내려받기', group: null, split: false },
+    { id: 'n2', text: '학생 이름 가리기', group: null, split: false },
+    { id: 'n3', text: '피드백 초안 쓰기', group: 'g1', split: false },
+    { id: 'n4', text: '피드백 기준 정하기', group: null, split: false },
+    { id: 'n5', text: '표본 확인하기', group: null, split: true },
+    { id: 'n6', text: '피드백 고치기', group: 'g2', split: false },
+    { id: 'n7', text: '그대로 올리기', group: null, split: false },
+    { id: 'n8', text: '게시판에 올리기', group: null, split: false },
+  ],
+  edges: [
+    { from: 'n1', to: 'n2', label: '' }, { from: 'n1', to: 'n4', label: '' },
+    { from: 'n2', to: 'n3', label: '' }, { from: 'n4', to: 'n3', label: '' },
+    { from: 'n3', to: 'n5', label: '' },
+    { from: 'n5', to: 'n6', label: '표현이 어색함' }, { from: 'n5', to: 'n7', label: '문제없음' },
+    { from: 'n6', to: 'n8', label: '' }, { from: 'n7', to: 'n8', label: '' },
+  ],
+  groups: [
+    { id: 'g1', type: 'each', unit: '글', check: '10건' },
+    { id: 'g2', type: 'until', stop: '' },
+  ],
+};
+// 카드를 끌어다 놓거나, 카드를 누른 뒤 오른쪽에서 고른다
+const did = (i, who) => !!(N(i) && N(i)[who]);
+const pickDo = (i, who) => (sel?.type === 'node' && sel.id === N(i).id ? [`.do-opt[data-do="${who}"]`] : [card(i)]);
+const pickVerify = (i, key) => (sel?.type === 'node' && sel.id === N(i).id ? [`.do-opt[data-do="${key}"]`] : [card(i)]);
+const pickData = (i, key, k) => (sel?.type === 'node' && sel.id === N(i).id ? [`.opt-chip[data-field="${key}"][data-k="${k}"]`] : [card(i)]);
+const setData = (i, values) => change(() => { Object.assign(N(i), values); });
+// 앞 화면을 건너뛰고 튜토리얼을 시작할 때 쓰는 가상 상황의 선택 내용
+function scenarioFor(kind) {
+  const s = JSON.parse(JSON.stringify(SCENARIO));
+  if (kind === 'divide') return s;
+  [[0, 'me'], [1, 'me'], [2, 'ai'], [3, 'me'], [4, 'ai', 'me'], [5, 'ai', 'me'], [6, 'me'], [7, 'me']].forEach(([i, ...who]) => {
+    who.forEach(w => { s.nodes[i][w] = true; });
+  });
+  if (kind === 'verify') return s;
+  s.nodes[2].verify = 'sample';
+  s.nodes[4].verify = 'all';
+  s.nodes[5].verify = 'all';
+  if (kind === 'data') return s;
+  Object.assign(s.nodes[2], { dataKind: 'web', dataPlace: 'school', dataPrivate: 'yes' });
+  Object.assign(s.nodes[4], { dataKind: 'doc', dataPlace: 'pc', dataPrivate: 'no' });
+  Object.assign(s.nodes[5], { dataKind: 'doc', dataPlace: 'pc', dataPrivate: 'no' });
+  return s;
+}
+const TUT_STEP = { flow: 1, divide: 2, verify: 3, data: 4, result: 5 };
+const FINISH = {
+  flow: {
+    title: '흐름도를 완성했습니다',
+    recap: ['+ 로 단계 붙이기', '동시에 진행', '건마다 되풀이', '조건에 따라 갈림', '만족할 때까지 되풀이', '화살표 잇기'],
+    next: 'divide', label: '일 나누기로 이어 가기',
+    text: '이어서 같은 상황으로 일을 나눠 보거나, 내 업무로 직접 해 보세요.',
+  },
+  divide: {
+    title: '일을 나눴습니다',
+    recap: ['끌어다 놓기', '카드를 누르고 고르기', '둘 다 표시하기'],
+    next: 'verify', label: '확인 기준으로 이어 가기',
+    text: '이어서 AI 결과를 어떻게 확인할지 골라 보세요.',
+  },
+  verify: {
+    title: '확인 방법을 골랐습니다',
+    recap: ['끌어다 놓기', '카드를 누르고 고르기'],
+    next: 'data', label: '자료 준비로 이어 가기',
+    text: '이어서 AI에게 줄 자료를 골라 보세요.',
+  },
+  data: {
+    title: '준비할 일이 정리됐습니다',
+    recap: ['자료 종류', '자료 위치', '학생 정보 표시', '준비할 일 보기'],
+    next: 'result', label: '결과 저장으로 이어 가기',
+    text: '이어서 결과를 받아 보세요.',
+  },
+  result: {
+    title: '모든 단계를 마쳤습니다',
+    recap: ['지시문 복사', '결과 전체 복사'],
+    next: null,
+    text: '이제 내 업무로 직접 해 보세요.',
+  },
+};
+const TUTORIALS = {
+  divide: [
+    {
+      title: 'AI에게 시킬 일 표시하기',
+      why: '글 80건에 초안을 쓰는 일은 AI에게 시켜 보고 싶습니다.',
+      text: '왼쪽의 "AI에게 시키기"를 "피드백 초안 쓰기" 카드 위에 놓으세요.',
+      drag: true,
+      targets: () => [chipOf('do-ai'), card(2)],
+      done: () => did(2, 'ai'),
+      auto: () => markDo(N(2).id, 'ai'),
+    },
+    {
+      title: '내가 할 일 표시하기',
+      why: '학생 이름은 AI에게 보내기 전에 가려야 하므로 직접 합니다.',
+      text: '왼쪽의 "내가 하기"를 "학생 이름 가리기" 카드 위에 놓으세요.',
+      drag: true,
+      targets: () => [chipOf('do-me'), card(1)],
+      done: () => did(1, 'me'),
+      auto: () => markDo(N(1).id, 'me'),
+    },
+    {
+      title: '둘 다 하는 단계',
+      why: 'AI가 문제 있어 보이는 글을 먼저 표시하고, 최종 판단은 내가 합니다.',
+      text: '"표본 확인하기" 카드를 누르고, 오른쪽에서 "AI에게 시키기"와 "내가 하기"를 모두 고르세요.',
+      targets: () => (sel?.type === 'node' && sel.id === N(4).id
+        ? [did(4, 'ai') ? null : '.do-opt[data-do="ai"]', did(4, 'me') ? null : '.do-opt[data-do="me"]'].filter(Boolean)
+        : [card(4)]),
+      done: () => did(4, 'ai') && did(4, 'me'),
+      auto: () => change(() => { N(4).ai = true; N(4).me = true; }),
+    },
+    {
+      title: '나머지 단계 나누기',
+      why: '정답은 없습니다. 같은 업무도 사람마다 다르게 나눌 수 있습니다.',
+      text: '남은 단계를 직접 나눠 보세요.',
+      targets: () => state.nodes.map((n, i) => (divided(n) ? null : card(i))).filter(Boolean),
+      done: () => state.nodes.every(divided),
+      auto: () => change(() => {
+        state.nodes.forEach((n, i) => {
+          if (divided(n)) return;
+          if (i === 5) { n.ai = true; n.me = true; } else n.me = true;
+        });
+      }),
+    },
+  ],
+  verify: [
+    {
+      title: '일부만 확인하기',
+      why: '글 80건을 전부 읽기는 어렵습니다. 표본을 정해 일부만 읽습니다.',
+      text: '왼쪽의 "일부만 확인"을 "피드백 초안 쓰기" 카드 위에 놓으세요.',
+      drag: true,
+      targets: () => [chipOf('vf-sample'), card(2)],
+      done: () => N(2)?.verify === 'sample',
+      auto: () => setData(2, { verify: 'sample' }),
+    },
+    {
+      title: '전부 확인하기',
+      why: 'AI가 문제 있다고 표시한 글은 내가 모두 읽고 판단합니다.',
+      text: '"표본 확인하기" 카드를 누르고, 오른쪽에서 "전부 확인"을 고르세요.',
+      targets: () => pickVerify(4, 'all'),
+      done: () => N(4)?.verify === 'all',
+      auto: () => setData(4, { verify: 'all' }),
+    },
+    {
+      title: '남은 단계 고르기',
+      why: '어두운 카드는 내가 하는 단계라 고를 내용이 없습니다.',
+      text: '남은 단계의 확인 방법을 골라 보세요.',
+      targets: () => state.nodes.map((n, i) => (n.ai && !n.verify ? card(i) : null)).filter(Boolean),
+      done: () => state.nodes.every(n => !n.ai || n.verify),
+      auto: () => change(() => { state.nodes.forEach(n => { if (n.ai && !n.verify) n.verify = 'all'; }); }),
+    },
+  ],
+  data: [
+    {
+      title: '자료 종류 고르기',
+      why: 'AI가 초안을 쓰려면 학생 글이 필요합니다.',
+      text: '왼쪽의 "게시판·웹 글"을 "피드백 초안 쓰기" 카드 위에 놓으세요.',
+      drag: true,
+      targets: () => [chipOf('dk-web'), card(2)],
+      done: () => N(2)?.dataKind === 'web',
+      auto: () => setData(2, { dataKind: 'web' }),
+    },
+    {
+      title: '자료 위치 고르기',
+      why: '자료가 어디 있는지에 따라 준비할 일이 달라집니다.',
+      text: '"피드백 초안 쓰기" 카드를 누르고, 오른쪽에서 "학교 시스템"을 고르세요.',
+      targets: () => pickData(2, 'dataPlace', 'school'),
+      done: () => N(2)?.dataPlace === 'school',
+      auto: () => setData(2, { dataPlace: 'school' }),
+    },
+    {
+      title: '학생 정보 표시하기',
+      why: '학생 글에는 이름과 학번이 있을 수 있습니다. 표시하면 가리는 일이 준비 목록에 들어갑니다.',
+      text: '"피드백 초안 쓰기" 카드를 누른 상태에서 오른쪽의 "들어갑니다"를 고르세요.',
+      targets: () => pickData(2, 'dataPrivate', 'yes'),
+      done: () => N(2)?.dataPrivate === 'yes',
+      auto: () => setData(2, { dataPrivate: 'yes' }),
+    },
+    {
+      title: '남은 단계 고르기',
+      why: '고를수록 오른쪽 목록에 준비할 일이 모입니다.',
+      text: '남은 단계의 자료를 골라 보세요.',
+      targets: () => state.nodes.map((n, i) => (n.ai && !dataReady(n) ? card(i) : null)).filter(Boolean),
+      done: () => state.nodes.every(n => !n.ai || dataReady(n)),
+      auto: () => change(() => {
+        state.nodes.forEach(n => {
+          if (n.ai && !dataReady(n)) { n.dataKind = 'doc'; n.dataPlace = 'pc'; n.dataPrivate = 'no'; }
+        });
+      }),
+    },
+  ],
+  result: [
+    {
+      title: '지시문 복사하기',
+      why: '고른 내용으로 단계별 지시문 초안이 만들어졌습니다. 요구 사항을 적어 AI 채팅 창에 넣습니다.',
+      text: '오른쪽 첫 번째 지시문의 "지시문 복사"를 누르세요.',
+      targets: () => ['.prompt-copy[data-first]'],
+      done: () => !!tut?.copied,
+      auto: () => { tut.copied = true; tutCheck(); },
+    },
+    {
+      title: '결과 전체 복사하기',
+      why: '흐름, 준비할 일, 지시문을 한 번에 받습니다. 글 파일이나 PDF로도 저장할 수 있습니다.',
+      text: '오른쪽 위의 "결과 전체 복사"를 누르세요.',
+      targets: () => ['.result-copy'],
+      done: () => !!tut?.copiedAll,
+      auto: () => { tut.copiedAll = true; tutCheck(); },
+    },
+  ],
+  flow: [
+    {
+      title: '다음 단계 붙이기',
+      why: '제목과 처음 두 단계는 미리 적어 두었습니다. 이름을 가린 글로 피드백 초안을 씁니다.',
+      text: '"학생 이름 가리기" 카드 아래의 + 를 누르고 "피드백 초안 쓰기"라고 적으세요.',
+      typing: true,
+      targets: () => [N(2) ? cardText(2) : plusAfter(1)],
+      done: () => named(2),
+      auto: () => { if (N(2)) change(() => setText(2, '피드백 초안 쓰기')); else addNamed(1, '피드백 초안 쓰기'); },
+    },
+    {
+      title: '동시에 할 수 있는 일 표시하기',
+      why: '이름을 가리는 동안 피드백 기준도 따로 정할 수 있습니다.',
+      text: '"동시에 진행"을 "학생 이름 가리기" 카드 위에 놓고, 새 카드에 "피드백 기준 정하기"라고 적으세요.',
+      typing: true,
+      drag: true,
+      targets: () => (N(3) ? [cardText(3)] : [chipOf('parallel'), card(1)]),
+      done: () => named(3),
+      auto: () => {
+        if (!N(3)) addParallel(N(1).id);
+        change(() => { setText(3, '피드백 기준 정하기'); focusNext = null; });
+      },
+    },
+    {
+      title: '건마다 하는 일 표시하기',
+      why: '글 80건마다 같은 일을 합니다. AI에게 맡기면 전부 읽지 않고 일부를 확인하게 됩니다.',
+      text: '"건마다 되풀이"를 "피드백 초안 쓰기" 카드 위에 놓으세요. 오른쪽에 "무엇마다"는 "글", "표본"은 "10건"이라고 적으세요.',
+      typing: true,
+      drag: true,
+      targets: () => {
+        if (groupType(2) !== 'each') return [chipOf('each'), card(2)];
+        // 묶음을 고른 동안에는 오른쪽 칸을, 아니면 묶음을 표시한다
+        return sel?.type === 'group' && sel.id === N(2).group ? ['.panel input[type=text]'] : [`.group[data-group="${N(2).group}"]`];
+      },
+      done: () => { const g = groupType(2) === 'each' && group(N(2).group); return g && g.unit && g.check; },
+      auto: () => {
+        if (groupType(2) !== 'each') wrapGroup(N(2).id, 'each');
+        const g = group(N(2).group);
+        change(() => { g.unit = '글'; g.check = '10건'; sel = null; });
+      },
+    },
+    {
+      title: '결과 확인 단계 넣기',
+      why: '초안이 나오면 사람이 일부를 읽어 봅니다.',
+      text: '"피드백 초안 쓰기" 아래의 + 를 누르고 "표본 확인하기"라고 적으세요.',
+      typing: true,
+      targets: () => [N(4) ? cardText(4) : plusAfter(2)],
+      done: () => named(4),
+      auto: () => { if (N(4)) change(() => setText(4, '표본 확인하기')); else addNamed(2, '표본 확인하기'); },
+    },
+    {
+      title: '경우에 따라 갈리는 일 표시하기',
+      why: '확인 결과에 따라 다음 일이 달라집니다.',
+      text: '"조건에 따라 갈림"을 "표본 확인하기" 카드 위에 놓으세요.',
+      drag: true,
+      targets: () => [chipOf('split'), card(4)],
+      done: () => N(4) && N(4).split,
+      auto: () => { makeSplit(N(4).id); focusNext = null; },
+    },
+    {
+      title: '갈래 이름과 조건 적기',
+      why: '어색한 글은 고치고, 문제없는 글은 그대로 올립니다.',
+      text: '왼쪽 카드에 "피드백 고치기", 오른쪽 카드에 "그대로 올리기"라고 적으세요. 화살표의 "조건 적기"를 눌러 "표현이 어색함"과 "문제없음"을 적으세요.',
+      typing: true,
+      targets: () => [cardText(5), cardText(6), '.edge-label.empty'].filter(Boolean),
+      done: () => named(4) && named(5) && named(6) && state.edges.filter(e => e.from === N(4).id).every(e => e.label.trim()),
+      auto: () => change(() => {
+        setText(5, '피드백 고치기');
+        setText(6, '그대로 올리기');
+        state.edges.filter(e => e.from === N(4).id).forEach((e, i) => { e.label = ['표현이 어색함', '문제없음'][i] || '그 외'; });
+        sel = null;
+      }),
+    },
+    {
+      title: '고치기를 되풀이하는 일 표시하기',
+      why: '고치는 일은 읽고 고치기를 되풀이합니다. 언제 멈출지는 사람이 정합니다.',
+      text: '"만족할 때까지 되풀이"를 "피드백 고치기" 카드 위에 놓으세요.',
+      drag: true,
+      targets: () => [chipOf('until'), card(5)],
+      done: () => groupType(5) === 'until',
+      auto: () => wrapGroup(N(5).id, 'until'),
+    },
+    {
+      title: '마지막 단계 붙이고 잇기',
+      why: '다 고친 글과 문제없는 글을 모두 게시판에 올립니다.',
+      text: '"피드백 고치기" 아래의 + 를 누르고 "게시판에 올리기"라고 적으세요. 그다음 "그대로 올리기" 카드 아래쪽 동그라미를 "게시판에 올리기" 카드로 끌어다 놓아 화살표로 이으세요.',
+      drag: true,
+      targets: () => (named(7) ? [`${card(6)} .link`, card(7)] : [N(7) ? cardText(7) : plusAfter(5)]),
+      done: () => named(7) && parents(N(7).id).includes(N(6).id),
+      auto: () => {
+        if (N(7)) change(() => setText(7, '게시판에 올리기')); else addNamed(5, '게시판에 올리기');
+        change(() => addEdge(N(6).id, N(7).id));
+      },
+    },
+  ],
+};
+
+let tut = null;   // { kind, steps, i, moving, base }
+
+function tutStart() {
+  $('toast').classList.remove('show');
+  tut = { kind: 'flow', steps: TUTORIALS.flow, i: 0, moving: false };
+  // 작업 중이던 내용은 되돌리기로 복구할 수 있다. 제목과 처음 두 단계는 채워 둔다
+  change(() => {
+    const s = JSON.parse(JSON.stringify(SCENARIO));
+    state = { title: s.title, cycle: s.cycle, nodes: s.nodes.slice(0, 2), edges: s.edges.slice(0, 1), groups: [] };
+    sel = null; fitMode = true;
+  });
+  tut.base = history.length;
+  goStep(1);
+  $('coach').hidden = false;
+  $('spot').removeAttribute('hidden');
+  tutShow();
+  render();
+}
+// keep 이 참이면 앞 튜토리얼에서 만든 내용을 그대로 이어 간다
+function tutStartFrom(kind, keep) {
+  $('toast').classList.remove('show');
+  tut = { kind, steps: TUTORIALS[kind], i: 0, moving: false };
+  if (!keep) change(() => { state = scenarioFor(kind); sel = null; fitMode = true; });
+  tut.base = history.length;
+  goStep(TUT_STEP[kind]);
+  $('coach').hidden = false;
+  $('spot').removeAttribute('hidden');
+  tutShow();
+  render();
+}
+function tutEnd() {
+  tut = null;
+  $('coach').hidden = true;
+  $('spot').setAttribute('hidden', '');
+  $('spot-dot').style.display = 'none';
+  tutMark();
+  render();
+}
+function tutShow() {
+  const total = tut.steps.length;
+  const finished = tut.i >= total;
+  $('coach').classList.toggle('finished', finished);
+  $('coach-count').textContent = finished ? '완료' : `${tut.i + 1} / ${total}`;
+  $('coach-bar').style.width = `${(finished ? total : tut.i + 1) / total * 100}%`;
+  $('coach-auto').hidden = finished;
+  $('coach-fresh').hidden = !finished;
+  $('coach-next').hidden = !(finished && FINISH[tut.kind].next);
+  if (finished && FINISH[tut.kind].next) $('coach-next').textContent = FINISH[tut.kind].label;
+  $('coach-recap').hidden = !finished;
+  $('coach-end').textContent = finished ? '이 흐름 더 만져 보기' : '튜토리얼 끝내기';
+  if (finished) {
+    const end = FINISH[tut.kind];
+    $('coach-title').textContent = end.title;
+    const left = tut.kind === 'flow' && state.groups.some(g => (g.type === 'until' && !g.stop) || (g.type === 'each' && !g.check));
+    $('coach-why').textContent = '이번 튜토리얼에서 다룬 조작입니다.';
+    $('coach-text').textContent = (left ? '오른쪽 "정해야 할 것"에 아직 정하지 않은 내용이 남아 있습니다. ' : '')
+      + end.text;
+    $('coach-recap').innerHTML = end.recap.map(r => `<li>${r}</li>`).join('');
+    $('coach-enter').hidden = true;
+    select(null);
+    tutPlace();
+    return;
+  }
+  const step = tut.steps[tut.i];
+  $('coach-title').textContent = step.title;
+  $('coach-why').textContent = step.why;
+  // 적을 말과 누를 곳은 굵게 표시한다
+  $('coach-text').innerHTML = step.text.replace(/"([^"]+)"/g, '<b>$1</b>');
+  $('coach-enter').hidden = !step.typing;
+  step.enter?.();
+  tutPlace();
+}
+// 지시한 곳을 깜빡여 표시한다
+function tutMark() {
+  document.querySelectorAll('.tut-target').forEach(el => el.classList.remove('tut-target'));
+  if (!tut) return;
+  tutPlace();
+  if (tut.i >= tut.steps.length) return;
+  let firstInCanvas = null;
+  tut.steps[tut.i].targets().forEach(selector => {
+    document.querySelectorAll(selector).forEach(el => {
+      el.classList.add('tut-target');
+      if (el.closest('.palette')) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      if (!firstInCanvas && el.closest('#canvas')) firstInCanvas = el;
+    });
+  });
+  firstInCanvas?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+// 화면에 보이는 부분만 잰다
+function visibleBox(el) {
+  const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  const pad = 6;
+  const box = { left: r.left - pad, top: r.top - pad, right: r.right + pad, bottom: r.bottom + pad, side: !!el.closest('.palette') };
+  const area = el.closest('#canvas, .palette, .panel');
+  if (area) {
+    const a = area.getBoundingClientRect();
+    box.left = Math.max(box.left, a.left);
+    box.top = Math.max(box.top, a.top);
+    box.right = Math.min(box.right, a.right);
+    box.bottom = Math.min(box.bottom, a.bottom);
+  }
+  return box.right > box.left && box.bottom > box.top ? box : null;
+}
+// 그림이 다시 그려진 뒤에 위치를 맞춘다
+let placeWaiting = false;
+function tutPlace() {
+  if (placeWaiting) return;
+  placeWaiting = true;
+  requestAnimationFrame(() => {
+    placeWaiting = false;
+    if (tut) { const boxes = drawSpot(); placeCoach(boxes); }
+  });
+}
+function drawSpot() {
+  const finished = tut.i >= tut.steps.length;
+  $('spot').toggleAttribute('hidden', finished);
+  const boxes = [...document.querySelectorAll('.tut-target')].map(visibleBox).filter(Boolean);
+  $('spot-holes').innerHTML = boxes.map(b =>
+    `<rect x="${b.left}" y="${b.top}" width="${b.right - b.left}" height="${b.bottom - b.top}" rx="12" fill="#000"/>`).join('');
+  // 끌어다 놓는 단계는 어디서 어디로 끄는지 선과 움직이는 점으로 보여 준다
+  const step = tut.steps[tut.i];
+  const ends = step?.drag ? step.targets().map(q => document.querySelector(q)).filter(Boolean).map(visibleBox) : [];
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let d = '';
+  if (ends.length === 2 && ends[0] && ends[1]) {
+    const [a, b] = ends;
+    if (b.left > a.right) {
+      const sy = (a.top + a.bottom) / 2, ey = (b.top + b.bottom) / 2, mid = (a.right + b.left) / 2;
+      d = `M${a.right} ${sy} C${mid} ${sy} ${mid} ${ey} ${b.left} ${ey}`;
+    } else {
+      const sx = (a.left + a.right) / 2, ex = (b.left + b.right) / 2, mid = (a.bottom + b.top) / 2;
+      d = `M${sx} ${a.bottom} C${sx} ${mid} ${ex} ${mid} ${ex} ${b.top}`;
+    }
+  }
+  $('spot-path').setAttribute('d', d);
+  $('spot-dot').style.offsetPath = d ? `path('${d}')` : 'none';
+  $('spot-dot').style.display = d && !still ? 'block' : 'none';
+  return boxes;
+}
+// 안내를 표시한 곳 옆에 붙인다. 표시한 곳은 가리지 않는다
+function placeCoach(boxes) {
+  const c = $('coach'), tip = $('coach-tip');
+  const W = window.innerWidth, H = window.innerHeight, M = 12, G = 18;
+  c.classList.toggle('sheet', W <= 820);
+  tip.className = 'tip';
+  if (W <= 820) return;
+  const w = c.offsetWidth, h = c.offsetHeight;
+  const wrap = document.querySelector('.canvas-wrap').getBoundingClientRect();
+  const put = (x, y) => { c.style.left = `${x}px`; c.style.top = `${y}px`; };
+  if (!boxes.length || tut.i >= tut.steps.length) { put(M, Math.max(M, H - h - M)); return; }
+  // 왼쪽 목록은 끌어 올 곳이므로 그 옆이 아니라 놓을 곳 옆에 붙인다
+  const main = boxes.filter(b => !b.side);
+  const base = main.length ? main : boxes;
+  const u = {
+    left: Math.min(...base.map(b => b.left)), right: Math.max(...base.map(b => b.right)),
+    top: Math.min(...base.map(b => b.top)), bottom: Math.max(...base.map(b => b.bottom)),
+  };
+  // 2번 화면부터는 고를 항목이 오른쪽 칸에 나오므로 그 칸도 가리지 않는다
+  const avoid = tut.kind !== 'flow' ? [...boxes, $('panel').getBoundingClientRect()] : boxes;
+  const fits = (x, y) => x >= M && y >= M && x + w <= W - M && y + h <= H - M
+    && !avoid.some(b => x < b.right && x + w > b.left && y < b.bottom && y + h > b.top);
+  const midY = Math.min(Math.max((u.top + u.bottom) / 2 - h / 2, M), H - h - M);
+  const midX = Math.min(Math.max((u.left + u.right) / 2 - w / 2, M), W - w - M);
+  const options = {
+    right: [u.right + G, midY, 'left'],
+    left: [u.left - G - w, midY, 'right'],
+    below: [midX, u.bottom + G, 'up'],
+    above: [midX, u.top - G - h, 'down'],
+  };
+  let order = ['right', 'below', 'above', 'left'];
+  if (u.bottom <= wrap.top) order = ['below', 'right', 'left', 'above'];   // 머리 줄
+  if (u.left >= wrap.right) order = ['left', 'below', 'above', 'right'];   // 오른쪽 설정 칸
+  const want = tut.steps[tut.i].prefer?.();
+  if (want) order = [want, ...order.filter(k => k !== want)];
+  const pick = order.find(k => fits(options[k][0], options[k][1]));
+  if (pick) {
+    const [x, y, side] = options[pick];
+    put(x, y);
+    tip.classList.add(side);
+    if (side === 'left' || side === 'right') {
+      tip.style.top = `${Math.min(Math.max((u.top + u.bottom) / 2 - y - 7, 18), h - 32)}px`;
+      tip.style.left = side === 'left' ? '' : 'auto';
+    } else {
+      tip.style.left = `${Math.min(Math.max((u.left + u.right) / 2 - x - 7, 18), w - 32)}px`;
+      tip.style.top = side === 'up' ? '' : 'auto';
+    }
+    return;
+  }
+  // 옆자리가 없으면 캔버스 모서리 중 가리지 않는 곳으로 간다
+  const corners = [
+    [wrap.right - w - M, wrap.top + M], [wrap.left + M, wrap.top + M],
+    [wrap.right - w - M, H - h - M], [wrap.left + M, H - h - M],
+  ];
+  const free = corners.find(([x, y]) => fits(x, y)) || corners[0];
+  put(free[0], free[1]);
+}
+window.addEventListener('scroll', () => { if (tut) tutPlace(); }, true);
+// 단계를 마쳤으면 잠깐 뒤 다음 단계로 넘어간다
+function tutCheck() {
+  if (!tut || tut.moving) return;
+  // 되돌리기나 지우기로 앞 단계가 다시 비면 그 단계로 돌아간다
+  const open = tut.steps.findIndex(step => !step.done());
+  const current = open === -1 ? tut.steps.length : open;
+  if (current < tut.i) {
+    tut.i = current;
+    tutShow();
+    tutMark();
+    return;
+  }
+  if (tut.i >= tut.steps.length || !tut.steps[tut.i].done()) return;
+  tut.moving = true;
+  $('coach').classList.add('ok');
+  setTimeout(() => {
+    $('coach').classList.remove('ok');
+    if (!tut) return;
+    tut.i += 1;
+    tut.moving = false;
+    tutShow();
+    tutMark();
+    tutCheck();
+  }, 650);
+}
+$('coach-auto').addEventListener('click', () => {
+  if (!tut || tut.moving || tut.i >= tut.steps.length) return;
+  tut.steps[tut.i].auto();
+});
+$('coach-end').addEventListener('click', tutEnd);
+$('coach-next').addEventListener('click', () => tutStartFrom(FINISH[tut.kind].next, true));
+$('coach-fresh').addEventListener('click', () => {
+  tutEnd();
+  change(() => { state = EMPTY(); sel = null; fitMode = true; });
+  goStep(1);
+  $('title').focus();
+});
+
+// ── 10-1. 자동 저장: 새로고침하거나 창을 닫아도 이어서 할 수 있게 브라우저에 남긴다 ──
+const SAVE_KEY = 'hycu-flow-tool';
+function autosave() {
+  // 튜토리얼의 가상 상황은 남기지 않는다
+  if (tut) return;
+  localStorage.setItem(SAVE_KEY, JSON.stringify({ state, stepNo }));
+}
+// 카드 이름이나 오른쪽 칸에 적는 글은 다시 그리지 않고 바로 바뀌므로 따로 남긴다
+document.addEventListener('input', autosave);
+window.addEventListener('pagehide', autosave);
+function restore() {
+  const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+  if (!saved || (!saved.state.nodes.length && !saved.state.title.trim())) return false;
+  state = saved.state;
+  goStep(state.nodes.length ? saved.stepNo : 1);
+  toast('지난번 작업을 불러왔습니다. 처음부터 하려면 위의 "새로 시작"을 누르세요.');
+  return true;
+}
+
+// ── 11. 시작 ────────────────────────────────────────
+const restored = restore();
+render();
+document.fonts.ready.then(render);
+// 시작 안내는 처음부터 떠 있으므로 이어서 할 때는 닫는다
+if (restored) closeWelcome(); else openWelcome();
+</script>
+</body>
+</html>
