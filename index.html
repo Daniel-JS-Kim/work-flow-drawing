@@ -663,7 +663,7 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
       <li><i>4</i><b>자료 준비</b><span>AI에게 줄 자료를 고르면 준비할 일이 나옵니다.</span></li>
       <li><i>5</i><b>결과 저장</b><span>흐름도와 AI에게 줄 지시문을 저장합니다.</span></li>
     </ol>
-    <p class="note">입력한 내용은 이 브라우저에만 저장되어 새로고침해도 남고, 서버로 보내지 않습니다. 학생 이름이나 성적은 적지 마세요.</p>
+    <p class="note">입력한 내용은 이 브라우저에만 저장되어 새로고침해도 남고, 서버로 보내지 않습니다.</p>
     <div class="modal-acts">
       <button class="btn primary" id="welcome-tutorial">가상 상황으로 따라 해 보기</button>
       <button class="btn" id="welcome-ai">AI에게 초안 받아 시작</button>
@@ -684,7 +684,7 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
     </div></div>
     <div class="ai-step"><i>2</i><div>
       <b>AI 채팅 창에 붙여 넣고 질문에 답합니다</b>
-      <p>학교에서 허용한 AI를 쓰고, 학생 이름이나 성적 같은 개인정보는 적지 마세요.</p>
+      <p>학교에서 허용한 AI를 씁니다.</p>
     </div></div>
     <div class="ai-step"><i>3</i><div>
       <b>AI의 마지막 답을 여기에 붙여 넣습니다</b>
@@ -714,7 +714,7 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
       <div class="mini" aria-label="완성될 흐름도">
         <div class="mini-cap">8단계를 마치면 이런 흐름도가 됩니다</div>
         <div class="mini-row"><span class="mini-card">게시판 글 내려받기</span></div>
-        <div class="mini-row"><span class="mini-card">학생 이름 가리기</span><span class="mini-card">피드백 기준 정하기</span></div>
+        <div class="mini-row"><span class="mini-card">글을 한 문서로 모으기</span><span class="mini-card">피드백 기준 정하기</span></div>
         <div class="mini-row"><div class="mini-box each"><small>글마다 되풀이</small><span class="mini-card">피드백 초안 쓰기</span></div></div>
         <div class="mini-row"><span class="mini-card">표본 확인하기</span></div>
         <div class="mini-row"><div class="mini-box until"><small>만족할 때까지</small><span class="mini-card">피드백 고치기</span></div><span class="mini-card" style="align-self:flex-end">그대로 올리기</span></div>
@@ -771,7 +771,7 @@ const EXAMPLE = {
   cycle: '매 학기',
   nodes: [
     { id: 'n1', text: '학교 시스템에서 답안 내려받기', group: null, split: false },
-    { id: 'n2', text: '학생 이름과 학번 가리기', group: null, split: false },
+    { id: 'n2', text: '답안을 한 파일로 모으기', group: null, split: false },
     { id: 'n3', text: '채점 기준표 다듬기', group: 'g2', split: false },
     { id: 'n4', text: '점수 초안 매기기', group: 'g1', split: false },
     { id: 'n5', text: '피드백 초안 쓰기', group: 'g1', split: false },
@@ -807,7 +807,7 @@ const VERIFY = {
 };
 const KINDS = { table: '엑셀·표', doc: '문서·PDF', hwp: '한글 파일', web: '게시판·웹 글', media: '녹음·영상', none: '자료 없음' };
 const PLACES = { pc: '내 PC', cloud: '클라우드 드라이브', school: '학교 시스템', mail: '메일·메신저' };
-const dataReady = n => n.dataKind === 'none' || !!(n.dataKind && n.dataPlace && n.dataPrivate);
+const dataReady = n => n.dataKind === 'none' || !!(n.dataKind && n.dataPlace);
 // 자료 종류와 위치에 따라 준비할 일을 만든다
 function prepOf(n) {
   if (!n.dataKind || n.dataKind === 'none') return [];
@@ -819,7 +819,6 @@ function prepOf(n) {
   if (n.dataKind === 'web') out.push('글 내용을 한 문서로 모으기');
   if (n.dataKind === 'media') out.push('녹음이나 영상을 글로 옮기기');
   if (n.dataKind === 'doc' && n.dataPlace === 'pc') out.push('AI 채팅 창에 올릴 수 있는 파일 크기인지 확인하기');
-  if (n.dataPrivate === 'yes') out.push('학생 이름과 학번 가리기', '학교 규정에서 AI에 넣어도 되는 자료인지 확인하기');
   return out;
 }
 // 단계별 AI 지시문 초안: 고른 내용을 틀에 채운다
@@ -831,7 +830,6 @@ function promptOf(n) {
   if (g && g.type === 'until') lines.push('제가 의견을 드리면 고쳐서 다시 보여 주세요.');
   if (n.dataKind === 'none') lines.push('자료는 따로 드리지 않습니다.');
   else if (n.dataKind) lines.push(`함께 드리는 자료: ${KINDS[n.dataKind]}`);
-  if (n.dataPrivate === 'yes') lines.push('자료의 학생 이름과 학번은 가렸습니다. 개인을 추측하지 마세요.');
   if (next.length) lines.push(`결과는 다음 단계에 씁니다: ${next.join(', ')}`);
   if (n.verify === 'all') lines.push('제가 결과를 모두 읽고 확인합니다. 판단 근거를 함께 적어 주세요.');
   if (n.verify === 'sample') lines.push('제가 일부만 확인합니다. 판단이 불확실한 건은 따로 표시해 주세요.');
@@ -1670,7 +1668,6 @@ function panelDataNode(p, n) {
   row('자료 종류', 'dataKind', KINDS);
   if (n.dataKind !== 'none') {
     row('자료 위치', 'dataPlace', PLACES);
-    row('학생 이름, 학번, 성적이 들어가나요?', 'dataPrivate', { yes: '들어갑니다', no: '들어가지 않습니다' });
   }
   const prep = prepOf(n);
   if (prep.length) {
@@ -1789,7 +1786,7 @@ function panelSummary(p) {
       b.addEventListener('click', () => select(t.to));
     });
   }
-  make('p', 'note', p).textContent = '입력한 내용은 이 브라우저 안에만 있고 서버로 보내지 않습니다. 학생 이름이나 성적은 적지 마세요.';
+  make('p', 'note', p).textContent = '입력한 내용은 이 브라우저 안에만 있고 서버로 보내지 않습니다.';
 }
 
 function panelNode(p, n) {
@@ -2211,7 +2208,7 @@ $('intro-back').addEventListener('click', () => { $('intro').hidden = true; open
 const AI_PROMPT = `당신은 대학 교수가 자기 업무를 흐름도로 정리하도록 돕습니다. 아래 순서로 진행하세요.
 
 1. 먼저 어떤 업무를 정리하려는지 저에게 물어보세요.
-2. 제 답을 읽고, 흐름도를 그리는 데 꼭 필요하지만 빠진 내용을 3~5개 한꺼번에 물어보세요. 쉬운 말로, 한 질문에 한 가지만 묻습니다. 물을 내용은 얼마나 자주 하는지, 일의 순서, 동시에 할 수 있는 일, 건마다 되풀이하는 일, 만족할 때까지 되풀이하는 일, 경우에 따라 갈리는 일, 함께 일하는 사람입니다. AI 활용 조언은 하지 말고, 학생 이름 같은 개인정보는 묻지 마세요.
+2. 제 답을 읽고, 흐름도를 그리는 데 꼭 필요하지만 빠진 내용을 3~5개 한꺼번에 물어보세요. 쉬운 말로, 한 질문에 한 가지만 묻습니다. 물을 내용은 얼마나 자주 하는지, 일의 순서, 동시에 할 수 있는 일, 건마다 되풀이하는 일, 만족할 때까지 되풀이하는 일, 경우에 따라 갈리는 일, 함께 일하는 사람입니다. AI 활용 조언은 하지 마세요.
 3. 제가 답하면 아래 규칙대로 초안을 만들어 JSON 코드 블록 하나로만 답하세요. 다른 설명은 쓰지 마세요.
 
 규칙
@@ -2339,7 +2336,7 @@ const SCENARIO = {
   cycle: '매주',
   nodes: [
     { id: 'n1', text: '게시판 글 내려받기', group: null, split: false },
-    { id: 'n2', text: '학생 이름 가리기', group: null, split: false },
+    { id: 'n2', text: '글을 한 문서로 모으기', group: null, split: false },
     { id: 'n3', text: '피드백 초안 쓰기', group: 'g1', split: false },
     { id: 'n4', text: '피드백 기준 정하기', group: null, split: false },
     { id: 'n5', text: '표본 확인하기', group: null, split: true },
@@ -2377,9 +2374,9 @@ function scenarioFor(kind) {
   s.nodes[4].verify = 'all';
   s.nodes[5].verify = 'all';
   if (kind === 'data') return s;
-  Object.assign(s.nodes[2], { dataKind: 'web', dataPlace: 'school', dataPrivate: 'yes' });
-  Object.assign(s.nodes[4], { dataKind: 'doc', dataPlace: 'pc', dataPrivate: 'no' });
-  Object.assign(s.nodes[5], { dataKind: 'doc', dataPlace: 'pc', dataPrivate: 'no' });
+  Object.assign(s.nodes[2], { dataKind: 'web', dataPlace: 'school' });
+  Object.assign(s.nodes[4], { dataKind: 'doc', dataPlace: 'pc' });
+  Object.assign(s.nodes[5], { dataKind: 'doc', dataPlace: 'pc' });
   return s;
 }
 const TUT_STEP = { flow: 1, divide: 2, verify: 3, data: 4, result: 5 };
@@ -2404,7 +2401,7 @@ const FINISH = {
   },
   data: {
     title: '준비할 일이 정리됐습니다',
-    recap: ['자료 종류', '자료 위치', '학생 정보 표시', '준비할 일 보기'],
+    recap: ['자료 종류', '자료 위치', '준비할 일 보기'],
     next: 'result', label: '결과 저장으로 이어 가기',
     text: '이어서 결과를 받아 보세요.',
   },
@@ -2428,12 +2425,12 @@ const TUTORIALS = {
     },
     {
       title: '내가 할 일 표시하기',
-      why: '학생 이름은 AI에게 보내기 전에 가려야 하므로 직접 합니다.',
-      text: '왼쪽의 "내가 하기"를 "학생 이름 가리기" 카드 위에 놓으세요.',
+      why: '피드백 기준은 내가 정해야 AI 초안이 그 기준을 따릅니다.',
+      text: '왼쪽의 "내가 하기"를 "피드백 기준 정하기" 카드 위에 놓으세요.',
       drag: true,
-      targets: () => [chipOf('do-me'), card(1)],
-      done: () => did(1, 'me'),
-      auto: () => markDo(N(1).id, 'me'),
+      targets: () => [chipOf('do-me'), card(3)],
+      done: () => did(3, 'me'),
+      auto: () => markDo(N(3).id, 'me'),
     },
     {
       title: '둘 다 하는 단계',
@@ -2505,14 +2502,6 @@ const TUTORIALS = {
       auto: () => setData(2, { dataPlace: 'school' }),
     },
     {
-      title: '학생 정보 표시하기',
-      why: '학생 글에는 이름과 학번이 있을 수 있습니다. 표시하면 가리는 일이 준비 목록에 들어갑니다.',
-      text: '"피드백 초안 쓰기" 카드를 누른 상태에서 오른쪽의 "들어갑니다"를 고르세요.',
-      targets: () => pickData(2, 'dataPrivate', 'yes'),
-      done: () => N(2)?.dataPrivate === 'yes',
-      auto: () => setData(2, { dataPrivate: 'yes' }),
-    },
-    {
       title: '남은 단계 고르기',
       why: '고를수록 오른쪽 목록에 준비할 일이 모입니다.',
       text: '남은 단계의 자료를 골라 보세요.',
@@ -2520,7 +2509,7 @@ const TUTORIALS = {
       done: () => state.nodes.every(n => !n.ai || dataReady(n)),
       auto: () => change(() => {
         state.nodes.forEach(n => {
-          if (n.ai && !dataReady(n)) { n.dataKind = 'doc'; n.dataPlace = 'pc'; n.dataPrivate = 'no'; }
+          if (n.ai && !dataReady(n)) { n.dataKind = 'doc'; n.dataPlace = 'pc'; }
         });
       }),
     },
@@ -2546,8 +2535,8 @@ const TUTORIALS = {
   flow: [
     {
       title: '다음 단계 붙이기',
-      why: '제목과 처음 두 단계는 미리 적어 두었습니다. 이름을 가린 글로 피드백 초안을 씁니다.',
-      text: '"학생 이름 가리기" 카드 아래의 + 를 누르고 "피드백 초안 쓰기"라고 적으세요.',
+      why: '제목과 처음 두 단계는 미리 적어 두었습니다. 한 문서로 모은 글로 피드백 초안을 씁니다.',
+      text: '"글을 한 문서로 모으기" 카드 아래의 + 를 누르고 "피드백 초안 쓰기"라고 적으세요.',
       typing: true,
       targets: () => [N(2) ? cardText(2) : plusAfter(1)],
       done: () => named(2),
@@ -2555,8 +2544,8 @@ const TUTORIALS = {
     },
     {
       title: '동시에 할 수 있는 일 표시하기',
-      why: '이름을 가리는 동안 피드백 기준도 따로 정할 수 있습니다.',
-      text: '"동시에 진행"을 "학생 이름 가리기" 카드 위에 놓고, 새 카드에 "피드백 기준 정하기"라고 적으세요.',
+      why: '글을 모으는 동안 피드백 기준도 따로 정할 수 있습니다.',
+      text: '"동시에 진행"을 "글을 한 문서로 모으기" 카드 위에 놓고, 새 카드에 "피드백 기준 정하기"라고 적으세요.',
       typing: true,
       drag: true,
       targets: () => (N(3) ? [cardText(3)] : [chipOf('parallel'), card(1)]),
