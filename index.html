@@ -412,6 +412,8 @@ body.step5 .work { grid-template-columns: minmax(0, 1fr) 440px; grid-template-ro
 .save-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .save-name { margin: 12px 0 0; font-size: 13.5px; color: var(--muted); word-break: break-all; }
 .save-name b { color: var(--text); font-weight: 600; }
+.save-done-msg { margin: 14px 0 0; padding: 12px; font-size: 14px; background: var(--accent-soft); border-radius: var(--r-ui); }
+a.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .ai-error { margin: 6px 0 0; padding: 8px 10px; font-size: 13.5px; color: #B42318; background: #FEF3F2; border-radius: var(--r-ui); }
 .ai-review { margin-bottom: 14px; padding: 12px; background: var(--accent-soft); border-radius: var(--r-ui); }
 .ai-review .sub { margin-top: 0; }
@@ -498,7 +500,7 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
 }
 @media (prefers-reduced-motion: reduce) { .tut-target { animation: none; } }
 
-/* ── 좁은 창 (Zoom 옆에 띄울 때) ───────────────────── */
+/* ── 좁은 창 (회의 화면 옆에 띄울 때) ───────────────────── */
 @media (max-width: 1240px) {
   .steps span:not(.on), .sep { display: none; }
   .work { grid-template-columns: minmax(0, 1fr) 280px; grid-template-rows: auto minmax(0, 1fr); }
@@ -568,12 +570,12 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
     <p class="hint">화살표 위 + 자리에 끌어다 놓습니다.</p>
     <button class="chip" data-kind="new"><span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></span><span><b>새 단계</b><small>업무의 할 일 하나</small></span></button>
 
-    <p class="sub">흐름 구분하기</p>
+    <p class="sub">연결 방식</p>
     <p class="hint">단계 카드 위에 끌어다 놓습니다.</p>
     <button class="chip" data-kind="parallel"><span class="ico parallel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></svg></span><span><b>동시에 진행</b><small>옆에 단계를 나란히 추가</small></span></button>
+    <button class="chip" data-kind="each"><span class="ico each"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span><span><b>건마다 되풀이</b><small>글 80건처럼 건별로 같은 일</small></span></button>
+    <button class="chip" data-kind="until"><span class="ico until"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></span><span><b>만족할 때까지 되풀이</b><small>결과가 기준에 맞을 때까지 다시 쓰게 함</small></span></button>
     <button class="chip" data-kind="split"><span class="ico split"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M15 6a9 9 0 0 0-9 9"/></svg></span><span><b>조건에 따라 갈림</b><small>경우에 따라 한쪽만 진행</small></span></button>
-    <button class="chip" data-kind="each"><span class="ico each"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span><span><b>건마다 되풀이</b><small>답안 120건처럼 건별로 같은 일</small></span></button>
-    <button class="chip" data-kind="until"><span class="ico until"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></span><span><b>만족할 때까지 되풀이</b><small>초안을 읽고 고치는 일</small></span></button>
 
     <p class="sub">카드 다루기</p>
     <p class="hint">번호 부분을 끌면 다른 자리로 옮겨집니다. 아래쪽 동그라미를 다른 카드로 끌면 화살표가 이어집니다.</p>
@@ -581,21 +583,21 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
     <div class="pal" id="pal-divide" hidden>
     <p class="sub">일 나누기</p>
     <p class="hint">단계 카드 위에 끌어다 놓습니다. 한 단계에 둘 다 놓아도 됩니다.</p>
-    <button class="chip" data-kind="do-ai"><span class="ico do-ai"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/></svg></span><span><b>AI에게 시키기</b><small>AI에게 시키고 싶은 일</small></span></button>
+    <button class="chip" data-kind="do-ai"><span class="ico do-ai"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/></svg></span><span><b>AI에게 맡기기</b><small>AI에게 맡기고 싶은 일</small></span></button>
     <button class="chip" data-kind="do-me"><span class="ico do-me"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span><b>내가 하기</b><small>내가 해야 하는 일</small></span></button>
     <p class="sub">흐름을 고치려면</p>
     <p class="hint">"이전: 흐름 그리기"로 돌아갑니다. 나눈 내용은 그대로 남습니다.</p>
     </div>
     <div class="pal" id="pal-verify" hidden>
     <p class="sub">확인 방법</p>
-    <p class="hint">AI에게 시킨 단계 카드 위에 끌어다 놓습니다.</p>
+    <p class="hint">사람의 판단이 들어가는 정도를 고릅니다. AI에게 맡긴 단계 카드 위에 끌어다 놓습니다.</p>
     <button class="chip" data-kind="vf-all"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 7 9.5 15.5 6 12"/><path d="m22 7-8.5 8.5"/></svg></span><span><b>전부 확인</b><small>결과를 모두 읽고 씁니다</small></span></button>
     <button class="chip" data-kind="vf-sample"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span><b>일부만 확인</b><small>표본 몇 건만 봅니다</small></span></button>
     <button class="chip" data-kind="vf-none"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span><span><b>그대로 사용</b><small>확인 없이 바로 씁니다</small></span></button>
     </div>
     <div class="pal" id="pal-data" hidden>
     <p class="sub">자료 종류</p>
-    <p class="hint">AI에게 시킨 단계 카드 위에 끌어다 놓습니다.</p>
+    <p class="hint">AI에게 맡긴 단계 카드 위에 끌어다 놓습니다.</p>
     <button class="chip" data-kind="dk-table"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg></span><span><b>엑셀·표</b></span></button>
     <button class="chip" data-kind="dk-doc"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg></span><span><b>문서·PDF</b></span></button>
     <button class="chip" data-kind="dk-hwp"><span class="ico act"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M8 13h8M8 17h5"/></svg></span><span><b>한글 파일</b></span></button>
@@ -662,14 +664,14 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
 <div class="modal-back" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
   <div class="modal">
     <span class="ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v3a3 3 0 0 0 3 3H14"/></svg></span>
-    <h2 id="welcome-title">내 업무를 흐름도로 정리합니다</h2>
-    <p>업무를 단계로 나눈 뒤, AI에게 맡길 부분과 직접 할 부분을 정합니다. 다섯 단계로 진행합니다.</p>
+    <h2 id="welcome-title">AI 에이전트에게 맡길 업무를 설계합니다</h2>
+    <p>업무를 단계로 나눈 뒤, AI에게 맡길 부분과 직접 할 부분을 정합니다. 다섯 화면으로 진행합니다.</p>
     <ol>
-      <li><i>1</i><b>흐름 그리기</b><span>업무를 단계로 나누고 순서를 정합니다.</span></li>
-      <li><i>2</i><b>일 나누기</b><span>AI에게 시킬 일과 내가 할 일을 나눕니다.</span></li>
-      <li><i>3</i><b>확인 기준</b><span>AI 결과를 어떻게 확인할지 고릅니다.</span></li>
-      <li><i>4</i><b>자료 준비</b><span>AI에게 줄 자료를 고르면 준비할 일이 나옵니다.</span></li>
-      <li><i>5</i><b>결과 저장</b><span>흐름도와 AI에게 줄 지시문을 저장합니다.</span></li>
+      <li><i>1</i><b>흐름 그리기</b><span>업무를 단계 카드로 적고 화살표로 잇습니다.</span></li>
+      <li><i>2</i><b>일 나누기</b><span>단계마다 AI에게 맡길지, 내가 할지 고릅니다.</span></li>
+      <li><i>3</i><b>확인 기준</b><span>AI가 한 결과를 어떻게 확인할지 고릅니다.</span></li>
+      <li><i>4</i><b>자료 준비</b><span>필요한 자료와 있는 곳을 고릅니다.</span></li>
+      <li><i>5</i><b>결과 저장</b><span>흐름도와 AI 지시문을 보고 작업 파일로 저장합니다.</span></li>
     </ol>
     <p class="note">입력한 내용은 이 브라우저에만 저장되어 새로고침해도 남고, 서버로 보내지 않습니다.</p>
     <div class="modal-acts">
@@ -714,9 +716,16 @@ body.dragging .coach { opacity: 0; pointer-events: none; }
     <input id="author" class="save-input" type="text" maxlength="20" placeholder="예: 홍길동" autocomplete="name">
     <p class="ai-error" id="save-error" role="alert" hidden>성함을 적어 주세요.</p>
     <p class="save-name">저장할 파일 이름: <b id="save-name"></b></p>
-    <div class="modal-acts">
+    <div class="modal-acts" id="save-acts">
       <button class="btn primary" id="save-go">저장</button>
       <button class="btn" id="save-cancel">취소</button>
+    </div>
+    <div id="save-done" hidden>
+      <p class="save-done-msg">저장했습니다. 내려받은 파일을 구글 드라이브의 올리는 곳에 올려 주세요. 다음 회차에 이 파일로 업무를 AI 에이전트로 옮겨 봅니다.</p>
+      <div class="modal-acts">
+        <a class="btn primary" id="save-upload" href="https://daniel-js-kim.github.io/work-flow-drawing/upload" target="_blank" rel="noopener">올리는 곳 열기</a>
+        <button class="btn" id="save-close">닫기</button>
+      </div>
     </div>
   </div>
 </div>
@@ -824,9 +833,9 @@ const EMPTY = () => ({ title: '', cycle: '한 번만', nodes: [], edges: [], gro
 const STEP_NAMES = ['흐름 그리기', '일 나누기', '확인 기준', '자료 준비', '결과 저장'];
 const divided = n => !!(n.ai || n.me);
 const VERIFY = {
-  all: { name: '전부 확인', desc: '결과를 모두 읽고 씁니다' },
-  sample: { name: '일부만 확인', desc: '표본 몇 건만 봅니다' },
-  none: { name: '그대로 사용', desc: '확인 없이 바로 씁니다' },
+  all: { name: '전부 확인', desc: '결과를 모두 읽고 씁니다', ex: '예: 학생에게 바로 나가는 글, 점수' },
+  sample: { name: '일부만 확인', desc: '표본 몇 건만 봅니다', ex: '예: 같은 형식으로 많이 만드는 결과' },
+  none: { name: '그대로 사용', desc: '확인 없이 바로 씁니다', ex: '예: AI 에이전트끼리 주고받는 작업 문서' },
 };
 const KINDS = { table: '엑셀·표', doc: '문서·PDF', hwp: '한글 파일', web: '게시판·웹 글', media: '녹음·영상', none: '자료 없음' };
 const PLACES = { pc: '내 PC', cloud: '클라우드 드라이브', school: '학교 시스템', mail: '메일·메신저' };
@@ -835,13 +844,15 @@ const dataReady = n => n.dataKind === 'none' || !!(n.dataKind && n.dataPlace);
 function prepOf(n) {
   if (!n.dataKind || n.dataKind === 'none') return [];
   const out = [];
+  // 슬라이드 16의 표와 같은 규칙: 자료 종류별 할 일 + 자료 위치별 할 일
   if (n.dataPlace === 'school') out.push('학교 시스템에서 자료 내려받기');
   if (n.dataPlace === 'mail') out.push('메일과 메신저에서 파일 모으기');
-  if (n.dataKind === 'table') out.push(n.dataPlace === 'cloud' ? '파일이 스프레드시트 형식인지 확인하기' : '엑셀을 스프레드시트로 옮기기');
+  if (n.dataPlace === 'pc') out.push('올릴 수 있는 파일 크기인지 확인하기');
+  if (n.dataPlace === 'cloud') out.push('클라우드 드라이브의 파일 형식 확인하기');
+  if (n.dataKind === 'table') out.push('엑셀을 스프레드시트로 옮기기');
   if (n.dataKind === 'hwp') out.push('한글 파일을 PDF나 워드로 바꾸기');
   if (n.dataKind === 'web') out.push('글 내용을 한 문서로 모으기');
   if (n.dataKind === 'media') out.push('녹음이나 영상을 글로 옮기기');
-  if (n.dataKind === 'doc' && n.dataPlace === 'pc') out.push('AI 채팅 창에 올릴 수 있는 파일 크기인지 확인하기');
   return out;
 }
 // 단계별 AI 지시문 초안: 고른 내용을 틀에 채운다
@@ -850,13 +861,13 @@ function promptOf(n) {
   const next = children(n.id).map(nodeName);
   const lines = [`저는 대학 교수이고, "${state.title || '업무'}" 업무를 하고 있습니다.`, `이번에 부탁할 일: ${nodeName(n.id)}`];
   if (g && g.type === 'each') lines.push(`${g.unit || '건'}마다 같은 형식으로 결과를 만들어 주세요.`);
-  if (g && g.type === 'until') lines.push('제가 의견을 드리면 고쳐서 다시 보여 주세요.');
+  if (g && g.type === 'until') lines.push(g.stop ? `다음 기준에 맞을 때까지 고쳐 주세요: ${g.stop}` : '제가 의견을 드리면 고쳐서 다시 보여 주세요.');
   if (n.dataKind === 'none') lines.push('자료는 따로 드리지 않습니다.');
-  else if (n.dataKind) lines.push(`함께 드리는 자료: ${KINDS[n.dataKind]}`);
+  else if (n.dataKind) lines.push(`함께 드리는 자료: ${KINDS[n.dataKind]}${n.dataPlace ? ` (${PLACES[n.dataPlace]}에 있음)` : ''}`);
   if (next.length) lines.push(`결과는 다음 단계에 씁니다: ${next.join(', ')}`);
   if (n.verify === 'all') lines.push('제가 결과를 모두 읽고 확인합니다. 판단 근거를 함께 적어 주세요.');
-  if (n.verify === 'sample') lines.push('제가 일부만 확인합니다. 판단이 불확실한 건은 따로 표시해 주세요.');
-  if (n.verify === 'none') lines.push('확인 없이 바로 쓰므로 정해진 형식을 꼭 지켜 주세요.');
+  if (n.verify === 'sample') lines.push(`제가 ${g && g.check ? `${g.check}만` : '일부만'} 확인합니다. 판단이 불확실한 건은 따로 표시해 주세요.`);
+  if (n.verify === 'none') lines.push('다음 단계가 확인 없이 받아 쓰므로 정해진 형식을 꼭 지켜 주세요.');
   lines.push('요구 사항: [원하는 분량, 말투, 형식을 여기에 적으세요]');
   return lines.join('\n');
 }
@@ -879,7 +890,7 @@ function resultText() {
   });
   const prep = prepAll();
   if (prep.length) {
-    lines.push('', '준비할 일');
+    lines.push('', '다음 회차 전에 준비할 일');
     prep.forEach(([t, who]) => lines.push(`- ${t} (${who.join(', ')})`));
   }
   const ai = state.nodes.filter(n => n.ai);
@@ -1081,7 +1092,7 @@ function growGroup(gid, direction) {
 function applyPalette(kind, id) {
   if (kind.startsWith('do-')) { markDo(id, kind.slice(3)); return; }
   if (/^(vf|dk|dp)-/.test(kind)) {
-    if (!node(id).ai) { toast('내가 하는 단계입니다. AI에게 시킨 단계에 놓아 주세요.'); return; }
+    if (!node(id).ai) { toast('내가 하는 단계입니다. AI에게 맡긴 단계에 놓아 주세요.'); return; }
     const field = { vf: 'verify', dk: 'dataKind', dp: 'dataPlace' }[kind.slice(0, 2)];
     change(() => { node(id)[field] = kind.slice(3); });
     return;
@@ -1555,7 +1566,7 @@ function field(parent, labelText, value, placeholder, onInput) {
 
 function panelDivideSummary(p) {
   make('div', 'kh', p).textContent = '일 나누기';
-  make('p', 'hint', p).textContent = '단계마다 AI에게 시킬 일과 내가 할 일을 나눕니다.';
+  make('p', 'hint', p).textContent = '단계마다 AI에게 맡길 일과 내가 할 일을 나눕니다.';
   const section = (title, list) => {
     make('p', 'sub', p).textContent = `${title} ${list.length}`;
     if (!list.length) return;
@@ -1566,7 +1577,7 @@ function panelDivideSummary(p) {
       b.addEventListener('click', () => select({ type: 'node', id: n.id }));
     });
   };
-  section('AI에게 시킬 일', state.nodes.filter(n => n.ai));
+  section('AI에게 맡길 일', state.nodes.filter(n => n.ai));
   section('내가 할 일', state.nodes.filter(n => n.me));
   const left = state.nodes.filter(n => !divided(n));
   if (left.length) {
@@ -1594,13 +1605,13 @@ function panelDivideNode(p, n) {
     make('span', 'mark', b).textContent = n[who] ? '✓' : '';
     b.addEventListener('click', () => toggleDo(n.id, who));
   };
-  option('ai', 'AI에게 시키기', 'AI에게 시키고 싶은 일');
+  option('ai', 'AI에게 맡기기', 'AI에게 맡기고 싶은 일');
   option('me', '내가 하기', '내가 해야 하는 일');
 }
 
 // 3번 화면: 확인 방법
 function noAiNote(p) {
-  make('p', 'hint', p).textContent = 'AI에게 시킨 단계가 없습니다. "일 나누기"에서 표시하면 여기에 나옵니다.';
+  make('p', 'hint', p).textContent = 'AI에게 맡긴 단계가 없습니다. "일 나누기"에서 표시하면 여기에 나옵니다.';
 }
 function selfCard(p, n) {
   make('div', 'kh', p).textContent = nodeName(n.id);
@@ -1608,7 +1619,7 @@ function selfCard(p, n) {
 }
 function panelVerifySummary(p) {
   make('div', 'kh', p).textContent = '확인 기준';
-  make('p', 'hint', p).textContent = 'AI에게 시킨 단계마다 결과를 어떻게 확인할지 고릅니다.';
+  make('p', 'hint', p).textContent = 'AI에게 맡긴 단계마다 결과를 어떻게 확인할지 고릅니다.';
   const ai = state.nodes.filter(n => n.ai);
   if (!ai.length) noAiNote(p);
   const tb = make('table', 'tb', p);
@@ -1631,7 +1642,7 @@ function panelVerifySummary(p) {
 function panelVerifyNode(p, n) {
   if (!n.ai) { selfCard(p, n); return; }
   make('div', 'kh', p).textContent = nodeName(n.id);
-  make('p', 'hint', p).textContent = 'AI 결과를 어떻게 확인할까요?';
+  make('p', 'hint', p).textContent = 'AI 결과를 어떻게 확인할까요? 사람의 판단이 들어가는 정도(Human-in-the-loop)를 고릅니다.';
   Object.entries(VERIFY).forEach(([key, v]) => {
     const b = make('button', 'do-opt', p);
     b.dataset.do = key;
@@ -1640,7 +1651,7 @@ function panelVerifyNode(p, n) {
     ico.innerHTML = document.querySelector(`.chip[data-kind="vf-${key}"] .ico`).innerHTML;
     const text = make('span', '', b);
     make('b', '', text).textContent = v.name;
-    make('small', '', text).textContent = v.desc;
+    make('small', '', text).textContent = `${v.desc}. ${v.ex}`;
     make('span', 'mark', b).textContent = n.verify === key ? '✓' : '';
     b.addEventListener('click', () => change(() => { n.verify = key; }));
   });
@@ -1653,7 +1664,7 @@ function panelDataSummary(p) {
   if (!ai.length) noAiNote(p);
   const prep = prepAll();
   if (prep.length) {
-    make('p', 'sub', p).textContent = '준비할 일';
+    make('p', 'sub', p).textContent = '다음 회차 전에 준비할 일';
     const ul = make('ul', 'prep-list', p);
     prep.forEach(([t, who]) => {
       const li = make('li', '', ul);
@@ -1694,7 +1705,7 @@ function panelDataNode(p, n) {
   }
   const prep = prepOf(n);
   if (prep.length) {
-    make('p', 'sub', p).textContent = '이 단계의 준비할 일';
+    make('p', 'sub', p).textContent = '이 단계에서 다음 회차 전에 준비할 일';
     const ul = make('ul', 'prep-list', p);
     prep.forEach(t => { make('li', '', ul).textContent = t; });
   }
@@ -1702,7 +1713,7 @@ function panelDataNode(p, n) {
 // 5번 화면: 결과 저장
 function panelResult(p) {
   make('div', 'kh', p).textContent = '결과 저장';
-  make('p', 'hint', p).textContent = '지금까지 고른 내용입니다. 지시문은 고른 내용을 틀에 채운 초안이므로, 요구 사항을 적어 AI 채팅 창에 넣으세요.';
+  make('p', 'hint', p).textContent = '지금까지 고른 내용입니다. 지시문은 고른 내용을 틀에 채운 초안입니다. 지금은 요구 사항을 적어 AI 채팅 창에서 시험해 볼 수 있고, 다음 회차에 AI 에이전트에게 줄 업무 지시서(Harness)의 바탕이 됩니다. 마지막에 작업 파일을 저장해 올려 주세요.';
   const acts = make('div', 'result-acts', p);
   const all = make('button', 'btn primary result-copy', acts);
   all.textContent = '결과 전체 복사';
@@ -1730,7 +1741,7 @@ function panelResult(p) {
   make('p', 'hint', acts).textContent = '다음에 이어서 고치려면 "작업 파일 저장"을 누르세요. 글 파일과 PDF는 읽기용이라 다시 불러올 수 없습니다.';
 
   const tb = make('table', 'tb', p);
-  [['AI에게 시킬 단계', state.nodes.filter(n => n.ai).length], ['내가 할 단계', state.nodes.filter(n => n.me).length], ['아직 나누지 않은 단계', state.nodes.filter(n => !divided(n)).length]]
+  [['AI에게 맡길 단계', state.nodes.filter(n => n.ai).length], ['내가 할 단계', state.nodes.filter(n => n.me).length], ['아직 나누지 않은 단계', state.nodes.filter(n => !divided(n)).length]]
     .forEach(([k, v]) => {
       const r = make('tr', '', tb);
       make('td', '', r).textContent = k;
@@ -1738,7 +1749,7 @@ function panelResult(p) {
     });
   const prep = prepAll();
   if (prep.length) {
-    make('p', 'sub', p).textContent = '준비할 일';
+    make('p', 'sub', p).textContent = '다음 회차 전에 준비할 일';
     const ul = make('ul', 'prep-list', p);
     prep.forEach(([t, who]) => {
       const li = make('li', '', ul);
@@ -1833,7 +1844,7 @@ function panelNode(p, n) {
     make('span', '', l).textContent = o.text || '(이름 없는 단계)';
   });
 
-  make('p', 'sub', p).textContent = '흐름 구분';
+  make('p', 'sub', p).textContent = '연결 방식';
   button(p, '옆에 나란히 추가 (동시에 진행)', () => addParallel(n.id));
   if (children(n.id).length > 1) {
     const ul2 = make('ul', '', p);
@@ -2062,6 +2073,7 @@ $('reset').addEventListener('click', () => {
   change(() => { state = EMPTY(); sel = null; fitMode = true; });
   goStep(1);
   toast('비웠습니다. 되돌리기로 복구할 수 있습니다.');
+  openWelcome();
 });
 function showSample() {
   tutEnd();
@@ -2082,6 +2094,9 @@ const fileBase = who => [safeName(who) || '성함', safeName(state.title) || '�
 function saveName() { $('save-name').textContent = fileBase($('author').value) + '.json'; }
 $('save').addEventListener('click', () => {
   $('author').value = author;
+  $('author').disabled = false;
+  $('save-acts').hidden = false;
+  $('save-done').hidden = true;
   $('save-error').hidden = true;
   saveName();
   $('savebox').hidden = false;
@@ -2103,9 +2118,14 @@ $('save-go').addEventListener('click', () => {
   a.download = name;
   a.click();
   URL.revokeObjectURL(a.href);
-  $('savebox').hidden = true;
-  toast(`"${name}" 파일로 저장했습니다.`);
+  $('author').disabled = true;
+  $('save-name').textContent = name;
+  $('save-acts').hidden = true;
+  $('save-done').hidden = false;
+  $('save-upload').focus();
+  if (tut) { tut.saved = true; tutCheck(); }
 });
+$('save-close').addEventListener('click', () => { $('savebox').hidden = true; });
 $('load').addEventListener('click', () => $('file').click());
 // 이 도구에서 저장한 파일인지 확인한다. 아니면 null 을 돌려준다
 function readSaved(text) {
@@ -2253,7 +2273,7 @@ $('intro-back').addEventListener('click', () => { $('intro').hidden = true; open
     if (ev.key === 'Escape') { $(id).hidden = true; return; }
     if (ev.key !== 'Tab') return;
     // 팝업 안에서만 키보드 이동
-    const items = [...$(id).querySelectorAll('button, textarea, input')];
+    const items = [...$(id).querySelectorAll('button, textarea, input, a.btn')].filter(e => e.offsetParent !== null);
     const first = items[0], last = items[items.length - 1];
     if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
     if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
@@ -2276,7 +2296,7 @@ const AI_PROMPT = `당신은 대학 교수가 자기 업무를 흐름도로 정�
 - 건마다 같은 일을 되풀이하면 type 이 "each" 인 groups 를 만들고 그 단계들의 group 에 id 를 적습니다. unit 에는 "답안"처럼 무엇마다인지 이름만 적습니다.
 - 만족할 때까지 되풀이하면 type 이 "until" 인 groups 를 만듭니다. 되돌아가는 화살표 대신 이 묶음을 씁니다.
 - check(표본 수)와 stop(멈출 기준)은 제가 직접 말한 경우에만 적고, 아니면 비웁니다.
-- AI에게 무엇을 시킬지는 정하지 않습니다.
+- AI에게 무엇을 맡길지는 정하지 않습니다.
 - cycle 은 "한 번만", "매주", "매월", "매 학기", "매년", "필요할 때" 중 하나입니다.
 - questions 에는 제가 초안을 검토할 때 확인할 질문을 2~3개 적습니다.
 - assumptions 와 questions 에는 n1, g1 같은 번호를 쓰지 않고 단계 이름으로 적습니다.
@@ -2404,7 +2424,7 @@ const SCENARIO = {
     { from: 'n1', to: 'n2', label: '' }, { from: 'n1', to: 'n4', label: '' },
     { from: 'n2', to: 'n3', label: '' }, { from: 'n4', to: 'n3', label: '' },
     { from: 'n3', to: 'n5', label: '' },
-    { from: 'n5', to: 'n6', label: '표현이 어색함' }, { from: 'n5', to: 'n7', label: '문제없음' },
+    { from: 'n5', to: 'n6', label: '문제 있음' }, { from: 'n5', to: 'n7', label: '문제없음' },
     { from: 'n6', to: 'n8', label: '' }, { from: 'n7', to: 'n8', label: '' },
   ],
   groups: [
@@ -2463,17 +2483,17 @@ const FINISH = {
   },
   result: {
     title: '모든 단계를 마쳤습니다',
-    recap: ['지시문 복사', '결과 전체 복사'],
+    recap: ['지시문 복사', '결과 전체 복사', '작업 파일 저장'],
     next: null,
-    text: '이제 내 업무로 직접 해 보세요.',
+    text: '이제 내 업무로 직접 해 보세요. 마친 작업 파일은 구글 드라이브에 올려 주세요.',
   },
 };
 const TUTORIALS = {
   divide: [
     {
-      title: 'AI에게 시킬 일 표시하기',
+      title: 'AI에게 맡길 일 표시하기',
       why: '글 80건에 초안을 쓰는 일은 AI에게 시켜 보고 싶습니다.',
-      text: '왼쪽의 "AI에게 시키기"를 "피드백 초안 쓰기" 카드 위에 놓으세요.',
+      text: '왼쪽의 "AI에게 맡기기"를 "피드백 초안 쓰기" 카드 위에 놓으세요.',
       drag: true,
       targets: () => [chipOf('do-ai'), card(2)],
       done: () => did(2, 'ai'),
@@ -2491,7 +2511,7 @@ const TUTORIALS = {
     {
       title: '둘 다 하는 단계',
       why: 'AI가 문제 있어 보이는 글을 먼저 표시하고, 최종 판단은 내가 합니다.',
-      text: '"표본 확인하기" 카드를 누르고, 오른쪽에서 "AI에게 시키기"와 "내가 하기"를 모두 고르세요.',
+      text: '"표본 확인하기" 카드를 누르고, 오른쪽에서 "AI에게 맡기기"와 "내가 하기"를 모두 고르세요.',
       targets: () => (sel?.type === 'node' && sel.id === N(4).id
         ? [did(4, 'ai') ? null : '.do-opt[data-do="ai"]', did(4, 'me') ? null : '.do-opt[data-do="me"]'].filter(Boolean)
         : [card(4)]),
@@ -2500,7 +2520,7 @@ const TUTORIALS = {
     },
     {
       title: '나머지 단계 나누기',
-      why: '정답은 없습니다. 같은 업무도 사람마다 다르게 나눌 수 있습니다.',
+      why: '정답은 없습니다. AI 에이전트라면 내려받기와 올리기도 맡길 수 있습니다.',
       text: '남은 단계를 직접 나눠 보세요.',
       targets: () => state.nodes.map((n, i) => (divided(n) ? null : card(i))).filter(Boolean),
       done: () => state.nodes.every(divided),
@@ -2573,7 +2593,7 @@ const TUTORIALS = {
   result: [
     {
       title: '지시문 복사하기',
-      why: '고른 내용으로 단계별 지시문 초안이 만들어졌습니다. 요구 사항을 적어 AI 채팅 창에 넣습니다.',
+      why: '고른 내용으로 단계별 지시문 초안이 만들어졌습니다. 지금은 AI 채팅 창에서 시험해 보고, 다음 회차에 AI 에이전트에게 줄 업무 지시서의 바탕으로 씁니다.',
       text: '오른쪽 첫 번째 지시문의 "지시문 복사"를 누르세요.',
       targets: () => ['.prompt-copy[data-first]'],
       done: () => !!tut?.copied,
@@ -2586,6 +2606,14 @@ const TUTORIALS = {
       targets: () => ['.result-copy'],
       done: () => !!tut?.copiedAll,
       auto: () => { tut.copiedAll = true; tutCheck(); },
+    },
+    {
+      title: '작업 파일 저장하기',
+      why: '다음 회차에 이 파일로 업무를 AI 에이전트로 옮겨 봅니다. 파일 이름에 성함이 들어갑니다.',
+      text: '위쪽의 "작업 파일 저장"을 누르고 성함을 적어 저장하세요.',
+      targets: () => ['#save'],
+      done: () => !!tut?.saved,
+      auto: () => { tut.saved = true; tutCheck(); },
     },
   ],
   flow: [
@@ -2650,14 +2678,14 @@ const TUTORIALS = {
     {
       title: '갈래 이름과 조건 적기',
       why: '어색한 글은 고치고, 문제없는 글은 그대로 올립니다.',
-      text: '왼쪽 카드에 "피드백 고치기", 오른쪽 카드에 "그대로 올리기"라고 적으세요. 화살표의 "조건 적기"를 눌러 "표현이 어색함"과 "문제없음"을 적으세요.',
+      text: '왼쪽 카드에 "피드백 고치기", 오른쪽 카드에 "그대로 올리기"라고 적으세요. 화살표의 "조건 적기"를 눌러 "문제 있음"과 "문제없음"을 적으세요.',
       typing: true,
       targets: () => [cardText(5), cardText(6), '.edge-label.empty'].filter(Boolean),
       done: () => named(4) && named(5) && named(6) && state.edges.filter(e => e.from === N(4).id).every(e => e.label.trim()),
       auto: () => change(() => {
         setText(5, '피드백 고치기');
         setText(6, '그대로 올리기');
-        state.edges.filter(e => e.from === N(4).id).forEach((e, i) => { e.label = ['표현이 어색함', '문제없음'][i] || '그 외'; });
+        state.edges.filter(e => e.from === N(4).id).forEach((e, i) => { e.label = ['문제 있음', '문제없음'][i] || '그 외'; });
         sel = null;
       }),
     },
